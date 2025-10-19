@@ -15,6 +15,7 @@ public class Proyecto1_Progra2 {
      */
     public static void main(String[] args) {
         new Menu().setVisible(true);
+        new Menu_Principal().setVisible(true);
+         
     }
-    
 }

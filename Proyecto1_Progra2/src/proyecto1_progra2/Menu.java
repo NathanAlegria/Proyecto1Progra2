@@ -203,6 +203,8 @@ public class Menu extends JFrame {
                 JOptionPane.showMessageDialog(Menu.this, "¡Bienvenido, " + usuarioIngresado + "!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 loginUserField.setText("");
                 loginPassField.setText("");
+                Menu.this.setVisible(false);
+                new Menu_Principal().setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(Menu.this, "Usuario o contraseña incorrectos.", "Error de Login", JOptionPane.ERROR_MESSAGE);
             }
