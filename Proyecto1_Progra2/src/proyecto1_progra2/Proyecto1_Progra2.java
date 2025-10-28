@@ -14,8 +14,6 @@ public class Proyecto1_Progra2 {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        new Menu().setVisible(true);
-        new Menu_Principal().setVisible(true);
-         
+        new Menu().setVisible(true);         
     }
 }

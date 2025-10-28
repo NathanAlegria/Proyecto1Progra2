@@ -4,127 +4,115 @@
  */
 package Logica;
 
-import javax.swing.JOptionPane;
 import java.util.ArrayList;
 import java.util.Arrays;
-
+import javax.swing.JOptionPane;
 /**
  *
  * @author Nathan
  */
 public class Cuentas {
 
-    private ArrayList<Usuarios> listaUsuarios = new ArrayList<>();
-    private static final int LARGO_CONTRA = 5;
-    
+    private static Cuentas instancia;
+    private ArrayList<Usuarios> listaUsuarios;
 
-    public Cuentas() {
-        listaUsuarios = new ArrayList<>();
-    }
-    
-
-    private boolean esAlfanumerico(char c) {
-        return (c >= 'a' && c <= 'z') || 
-               (c >= 'A' && c <= 'Z') || 
-               (c >= '0' && c <= '9');
+    private Cuentas() {
+        this.listaUsuarios = new ArrayList<>();
     }
 
-    public boolean registrarUsuario(String username, char[] passwordChars) {
-        String password = new String(passwordChars).trim();
-        username = username != null ? username.trim() : "";
+    public static Cuentas getInstance() {
+        if (instancia == null) {
+            instancia = new Cuentas();
+        }
+        return instancia;
+    }
 
-        if (username.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Error: El nombre de usuario está vacío", "Información", JOptionPane.INFORMATION_MESSAGE);
-            Usuarios.limpiarContrasena(passwordChars);
+    public boolean registrarUsuario(String usuario, char[] contrasena) {
+        if (buscarUsuario(usuario) != null) {
+            JOptionPane.showMessageDialog(null, "El nombre de usuario ya existe.", "Error de Registro", JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
-        if (password.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Error: La contraseña está vacía", "Información", JOptionPane.INFORMATION_MESSAGE);
-            Usuarios.limpiarContrasena(passwordChars);
+        if (contrasena.length != 5) {
+            JOptionPane.showMessageDialog(null, "La contraseña debe tener exactamente 5 caracteres.", "Error de Contraseña", JOptionPane.WARNING_MESSAGE);
             return false;
         }
 
-        if (password.length() != LARGO_CONTRA) {
-            JOptionPane.showMessageDialog(null,
-                    "Error: La contraseña debe tener EXACTAMENTE " + LARGO_CONTRA + " caracteres. Actual: " + password.length(),
-                    "Información",
-                    JOptionPane.INFORMATION_MESSAGE);
-            Usuarios.limpiarContrasena(passwordChars);
-            return false;
-        }
-
-        boolean tieneEspecial = false;
-        for (char c : passwordChars) {
-            if (!esAlfanumerico(c)) {
-                tieneEspecial = true;
-                break;
-            }
-        }
-
-        if (!tieneEspecial) {
-            JOptionPane.showMessageDialog(null,
-                    "Error: La contraseña debe contener por lo menos 1 caracter especial (símbolo, puntuación, etc.).",
-                    "Información",
-                    JOptionPane.INFORMATION_MESSAGE);
-            Usuarios.limpiarContrasena(passwordChars);
-            return false;
-        }
-
-        for (Usuarios user : listaUsuarios) {
-            if (user.getUsuario().equalsIgnoreCase(username)) {
-                JOptionPane.showMessageDialog(null, "Error el usuario: " + username + " Ya existe", "Información", JOptionPane.INFORMATION_MESSAGE);
-                Usuarios.limpiarContrasena(passwordChars);
-                return false;
-            }
-        }
-
-        listaUsuarios.add(new Usuarios(username, passwordChars));
-
-        JOptionPane.showMessageDialog(null, "ÉXITO: Usuario '" + username + "' registrado.\nTotal usuarios: " + listaUsuarios.size(), "Registro exitoso", JOptionPane.INFORMATION_MESSAGE);
-
-        Usuarios.limpiarContrasena(passwordChars);
+        Usuarios nuevoUsuario = new Usuarios(usuario, contrasena);
+        listaUsuarios.add(nuevoUsuario);
+        JOptionPane.showMessageDialog(null, "Usuario creado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
         return true;
     }
 
-    public boolean verificarCredenciales(String username, char[] passwordChars) {
-        username = username != null ? username.trim() : null;
-
-        if (username == null || passwordChars == null) {
-            JOptionPane.showMessageDialog(null, "Error: Credenciales nulas", "Información", JOptionPane.INFORMATION_MESSAGE);
-            Usuarios.limpiarContrasena(passwordChars);
+    public boolean verificarCredenciales(String usuario, char[] contrasena) {
+        Usuarios user = buscarUsuario(usuario);
+        if (user == null || !user.getEstado()) {
             return false;
         }
 
-        for (Usuarios user : listaUsuarios) {
-            if (user.getUsuario().equals(username)) {
-                if (user.confirmarcontra(passwordChars)) {
-                    JOptionPane.showMessageDialog(null, "Exito: Credenciales de: " + username, "Información", JOptionPane.INFORMATION_MESSAGE);
-                    Usuarios.limpiarContrasena(passwordChars);
-                    return true;
-                }
-            }
-        }
-
-        JOptionPane.showMessageDialog(null, "Error Credenciales inválidas.", "Información", JOptionPane.INFORMATION_MESSAGE);
-        Usuarios.limpiarContrasena(passwordChars);
-        return false;
+        char[] storedPass = user.getContrasena();
+        boolean match = Arrays.equals(storedPass, contrasena);
+        
+        Usuarios.limpiarContrasena(storedPass); 
+        return match;
     }
 
-    public Usuarios buscarUsuario(String username) {
-        if (username == null) {
-            return null;
-        }
-
+    public Usuarios buscarUsuario(String usuario) {
         for (Usuarios user : listaUsuarios) {
-            if (user.getUsuario().equals(username)) {
+            if (user.getUsuario().equalsIgnoreCase(usuario)) {
                 return user;
             }
         }
         return null;
     }
 
-    public int getNumUsuarios() {
-        return listaUsuarios.size();
+    public boolean cambiarContrasena(String usuario, char[] contrasenaAntigua, char[] contrasenaNueva) {
+        Usuarios user = buscarUsuario(usuario);
+
+        if (user == null || !user.getEstado()) {
+            JOptionPane.showMessageDialog(null, "Error: Usuario no encontrado o inactivo.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        if (contrasenaNueva.length != 5) {
+            JOptionPane.showMessageDialog(null, "La nueva contraseña debe tener exactamente 5 caracteres.", "Error de Contraseña", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
+        if (verificarCredenciales(usuario, contrasenaAntigua)) {
+            user.setContrasena(contrasenaNueva);
+            return true;
+        } else {
+            JOptionPane.showMessageDialog(null, "Contraseña actual incorrecta.", "Error de Verificación", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    public boolean eliminarUsuario(String usuario, char[] contrasena) {
+        Usuarios user = buscarUsuario(usuario);
+
+        if (user == null || !user.getEstado()) {
+            JOptionPane.showMessageDialog(null, "Error: Usuario no encontrado o ya inactivo.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        if (verificarCredenciales(usuario, contrasena)) {
+            user.setEstado(false);
+            JOptionPane.showMessageDialog(null, "Cuenta de usuario " + usuario + " eliminada (Inactiva) exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        } else {
+            JOptionPane.showMessageDialog(null, "Contraseña incorrecta para eliminar la cuenta.", "Error de Verificación", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    public ArrayList<Usuarios> getRankingData() {
+        ArrayList<Usuarios> activos = new ArrayList<>();
+        for (Usuarios user : listaUsuarios) {
+            if (user.getEstado()) {
+                activos.add(user);
+            }
+        }
+        return activos;
     }
 }

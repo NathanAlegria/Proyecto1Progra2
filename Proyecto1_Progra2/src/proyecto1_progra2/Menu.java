@@ -14,17 +14,15 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.util.Arrays;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-/**
- *
- * @author Nathan
- */
 public class Menu extends JFrame {
 
     private Image backgroundImage;
-    private JButton logInButton;
-    private JButton createPlayerButton;
-    private JButton exitButton;
+    private Image buttonImage;
+    private Image buttonHoverImage;
+    private Image subTitleBackgroundImage;
 
     private JTextField loginUserField;
     private JPasswordField loginPassField;
@@ -47,23 +45,98 @@ public class Menu extends JFrame {
         }
     }
 
+    private class SubTitlePanel extends JPanel {
+        public SubTitlePanel() {
+            setOpaque(false);
+            setLayout(new GridBagLayout());
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (subTitleBackgroundImage != null) {
+                g.drawImage(subTitleBackgroundImage, 0, 0, getWidth(), getHeight(), this);
+            } else {
+                g.setColor(new Color(0, 0, 0, 150));
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+        }
+    }
+
+    private class ThemedButton extends JButton {
+        protected boolean isHovered = false;
+        private final Font buttonFont = new Font("Serif", Font.BOLD, 20);
+
+        public ThemedButton(String text) {
+            super(text);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setForeground(new Color(255, 255, 200));
+            setFont(buttonFont);
+            setPreferredSize(new Dimension(300, 60));
+            setMaximumSize(new Dimension(300, 60));
+            setMinimumSize(new Dimension(300, 60));
+
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent evt) {
+                    isHovered = true;
+                    repaint();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent evt) {
+                    isHovered = false;
+                    repaint();
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            Image imgToDraw = isHovered ? buttonHoverImage : buttonImage;
+            
+            if (imgToDraw != null) {
+                g2.drawImage(imgToDraw, 0, 0, getWidth(), getHeight(), this);
+            } else {
+                g2.setColor(isHovered ? new Color(130, 60, 0, 200) : new Color(80, 40, 0, 180));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setColor(new Color(160, 100, 0));
+                g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+            }
+            
+            if (isHovered) {
+                setForeground(Color.WHITE);
+            } else {
+                setForeground(new Color(255, 255, 200));
+            }
+
+            super.paintComponent(g2);
+            g2.dispose();
+        }
+    }
+
     public Menu() {
         setTitle("🏰 Vampire Wargame 📜");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
         setLocationRelativeTo(null);
         setResizable(false);
-        sistemaCuentas = new Cuentas();
+        this.sistemaCuentas = Cuentas.getInstance();
 
         try {
-            backgroundImage = ImageIO.read(getClass().getResource("/Imagenes/fondo.jpeg"));
+            backgroundImage = ImageIO.read(getClass().getResource("/Imagenes/fondo.jpg"));
+            buttonImage = ImageIO.read(getClass().getResource("/Imagenes/botones.jpg"));
+            buttonHoverImage = ImageIO.read(getClass().getResource("/Imagenes/botones.jpg")); 
+            subTitleBackgroundImage = ImageIO.read(getClass().getResource("/Imagenes/subT.jpg")); 
 
         } catch (IOException | IllegalArgumentException e) {
-
-            System.err.println("Error al cargar la imagen de fondo: " + e.getMessage());
-
-            JOptionPane.showMessageDialog(this, "No se pudo cargar la imagen de fondo. Asegúrate de que 'fondo.jpeg' esté en el paquete 'Imagenes'.", "Error de Recurso", JOptionPane.ERROR_MESSAGE);
-
+            System.err.println("Error al cargar la imagen de fondo o botones: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "No se pudo cargar la imagen de fondo o botones. Asegúrate de que los archivos estén en el paquete 'Imagenes'.", "Error de Recurso", JOptionPane.ERROR_MESSAGE);
         }
 
         BackgroundPanel backgroundPanel = new BackgroundPanel();
@@ -91,10 +164,17 @@ public class Menu extends JFrame {
         backgroundPanel.add(titleLabel, gbc);
 
         JLabel subTitleLabel = new JLabel("— Lord of Shadows —");
-        subTitleLabel.setForeground(new Color(255, 255, 255));
+        subTitleLabel.setForeground(Color.WHITE);
         subTitleLabel.setFont(new Font("Serif", Font.ITALIC, 20));
+        subTitleLabel.setOpaque(false);
+
+        SubTitlePanel subTitleBgPanel = new SubTitlePanel();
+        subTitleBgPanel.setPreferredSize(new Dimension(300, 40));
+        subTitleBgPanel.setMaximumSize(new Dimension(300, 40));
+        subTitleBgPanel.add(subTitleLabel);
+
         gbc.gridy = 1;
-        backgroundPanel.add(subTitleLabel, gbc);
+        backgroundPanel.add(subTitleBgPanel, gbc);
 
         gbc.gridy = 2;
         backgroundPanel.add(cardPanel, gbc);
@@ -104,7 +184,7 @@ public class Menu extends JFrame {
     }
 
     private void setTextFieldSize(JComponent field) {
-        Dimension fixedSize = new Dimension(field.getPreferredSize().width, 30);
+        Dimension fixedSize = new Dimension(250, 30);
         field.setMinimumSize(fixedSize);
         field.setPreferredSize(fixedSize);
         field.setMaximumSize(fixedSize);
@@ -113,12 +193,13 @@ public class Menu extends JFrame {
     private JPanel buildMenuPanel(CardLayout cards, JPanel cardPanel) {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
-        buttonPanel.setOpaque(false);
+        buttonPanel.setOpaque(true);
+        buttonPanel.setBackground(new Color(0, 0, 0, 100)); 
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 0, 0));
 
-        logInButton = createThemedButton("Log In");
-        createPlayerButton = createThemedButton("Crear Player");
-        exitButton = createThemedButton("Salir");
+        JButton logInButton = new ThemedButton("Log In");
+        JButton createPlayerButton = new ThemedButton("Crear Player");
+        JButton exitButton = new ThemedButton("Salir");
 
         logInButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         createPlayerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -145,7 +226,8 @@ public class Menu extends JFrame {
 
     private JPanel buildLoginPanel(CardLayout cards, JPanel cardPanel) {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(false);
+        panel.setOpaque(true);
+        panel.setBackground(new Color(0, 0, 0, 150));
 
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(10, 10, 10, 10);
@@ -154,8 +236,16 @@ public class Menu extends JFrame {
         c.gridy = 0;
         c.gridwidth = 2;
 
+        JLabel titleLabel = new JLabel("INICIAR SESIÓN");
+        titleLabel.setForeground(new Color(255, 215, 0));
+        titleLabel.setFont(new Font("Serif", Font.BOLD, 24));
+        c.insets = new Insets(0, 0, 20, 0);
+        panel.add(titleLabel, c);
+        c.insets = new Insets(10, 10, 10, 10);
+        
+        c.gridy++;
         JLabel userLabel = new JLabel("Usuario:");
-        userLabel.setForeground(Color.WHITE);
+        userLabel.setForeground(new Color(200, 200, 200));
         panel.add(userLabel, c);
 
         c.gridy++;
@@ -165,7 +255,7 @@ public class Menu extends JFrame {
 
         c.gridy++;
         JLabel passLabel = new JLabel("Contraseña:");
-        passLabel.setForeground(Color.WHITE);
+        passLabel.setForeground(new Color(200, 200, 200));
         panel.add(passLabel, c);
 
         c.gridy++;
@@ -175,12 +265,16 @@ public class Menu extends JFrame {
 
         c.gridy++;
         c.gridwidth = 1;
-        JButton loginBtn = createThemedButton("Iniciar Sesión");
+        JButton loginBtn = new ThemedButton("Iniciar Sesión");
         panel.add(loginBtn, c);
 
         c.gridx = 1;
-        JButton backBtn = createThemedButton("Volver");
-        backBtn.addActionListener(e -> cards.show(cardPanel, "MenuPrincipal"));
+        JButton backBtn = new ThemedButton("Volver");
+        backBtn.addActionListener(e -> {
+            loginUserField.setText("");
+            loginPassField.setText("");
+            cards.show(cardPanel, "MenuPrincipal");
+        });
         panel.add(backBtn, c);
 
         loginBtn.addActionListener(e -> {
@@ -189,36 +283,40 @@ public class Menu extends JFrame {
 
             if (usuarioIngresado.isEmpty()) {
                 JOptionPane.showMessageDialog(Menu.this, "Ingresa tu nombre de usuario.", "Faltan datos", JOptionPane.WARNING_MESSAGE);
-                Usuarios.limpiarContrasena(contraIngresada);
+                Logica.Usuarios.limpiarContrasena(contraIngresada);
+                loginPassField.setText("");
                 return;
             }
 
             if (contraIngresada.length == 0) {
                 JOptionPane.showMessageDialog(Menu.this, "Ingresa tu contraseña.", "Faltan datos", JOptionPane.WARNING_MESSAGE);
-                Usuarios.limpiarContrasena(contraIngresada);
+                Logica.Usuarios.limpiarContrasena(contraIngresada); 
+                loginPassField.setText("");
                 return;
             }
-
             if (sistemaCuentas.verificarCredenciales(usuarioIngresado, contraIngresada)) {
+
                 JOptionPane.showMessageDialog(Menu.this, "¡Bienvenido, " + usuarioIngresado + "!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 loginUserField.setText("");
                 loginPassField.setText("");
+                
                 Menu.this.setVisible(false);
-                new Menu_Principal().setVisible(true);
+                
+                Logica.Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuarioIngresado);
+                Menu_Principal menuPrincipal = new Menu_Principal(sistemaCuentas);
+                menuPrincipal.iniciarMenu(usuarioLogeado);
             } else {
                 JOptionPane.showMessageDialog(Menu.this, "Usuario o contraseña incorrectos.", "Error de Login", JOptionPane.ERROR_MESSAGE);
+                loginPassField.setText("");
             }
-
-            Usuarios.limpiarContrasena(contraIngresada);
-            loginPassField.setText("");
         });
-
         return panel;
     }
 
     private JPanel buildRegisterPanel(CardLayout cards, JPanel cardPanel) {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(false);
+        panel.setOpaque(true);
+        panel.setBackground(new Color(0, 0, 0, 150));
 
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(10, 10, 10, 10);
@@ -226,9 +324,17 @@ public class Menu extends JFrame {
         c.gridx = 0;
         c.gridy = 0;
         c.gridwidth = 2;
+        
+        JLabel titleLabel = new JLabel("CREAR NUEVO JUGADOR");
+        titleLabel.setForeground(new Color(255, 215, 0));
+        titleLabel.setFont(new Font("Serif", Font.BOLD, 24));
+        c.insets = new Insets(0, 0, 20, 0);
+        panel.add(titleLabel, c);
+        c.insets = new Insets(10, 10, 10, 10);
 
+        c.gridy++;
         JLabel userLabel = new JLabel("Crear Usuario (Será el nombre de Jugador):");
-        userLabel.setForeground(Color.WHITE);
+        userLabel.setForeground(new Color(200, 200, 200));
         panel.add(userLabel, c);
 
         c.gridy++;
@@ -238,7 +344,7 @@ public class Menu extends JFrame {
 
         c.gridy++;
         JLabel passLabel = new JLabel("Contraseña (5 caracteres):");
-        passLabel.setForeground(Color.WHITE);
+        passLabel.setForeground(new Color(200, 200, 200));
         panel.add(passLabel, c);
 
         c.gridy++;
@@ -248,7 +354,7 @@ public class Menu extends JFrame {
 
         c.gridy++;
         JLabel confPassLabel = new JLabel("Confirmar Contraseña:");
-        confPassLabel.setForeground(Color.WHITE);
+        confPassLabel.setForeground(new Color(200, 200, 200));
         panel.add(confPassLabel, c);
 
         c.gridy++;
@@ -258,12 +364,17 @@ public class Menu extends JFrame {
 
         c.gridy++;
         c.gridwidth = 1;
-        JButton registerBtn = createThemedButton("Registrar");
+        JButton registerBtn = new ThemedButton("Registrar");
         panel.add(registerBtn, c);
 
         c.gridx = 1;
-        JButton backBtn = createThemedButton("Volver");
-        backBtn.addActionListener(e -> cards.show(cardPanel, "MenuPrincipal"));
+        JButton backBtn = new ThemedButton("Volver");
+        backBtn.addActionListener(e -> {
+            registerUserField.setText("");
+            registerPassField.setText("");
+            registerConfPassField.setText("");
+            cards.show(cardPanel, "MenuPrincipal");
+        });
         panel.add(backBtn, c);
 
         registerBtn.addActionListener(e -> {
@@ -288,46 +399,23 @@ public class Menu extends JFrame {
             }
 
             if (sistemaCuentas.registrarUsuario(usuario, contra)) {
+                
                 registerUserField.setText("");
                 registerPassField.setText("");
                 registerConfPassField.setText("");
-                cards.show(cardPanel, "Login");
+                
+                Menu.this.setVisible(false);
+                
+                Logica.Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuario);
+                Menu_Principal menuPrincipal = new Menu_Principal(sistemaCuentas);
+                menuPrincipal.iniciarMenu(usuarioLogeado);
+
             }
 
             Usuarios.limpiarContrasena(contra);
             Usuarios.limpiarContrasena(confContra);
-            registerPassField.setText("");
-            registerConfPassField.setText("");
         });
 
         return panel;
-    }
-
-    private JButton createThemedButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Serif", Font.BOLD, 20));
-        button.setForeground(new Color(255, 255, 200));
-        button.setBackground(new Color(80, 40, 0, 180));
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(160, 100, 0), 3),
-                BorderFactory.createEmptyBorder(10, 25, 10, 25)
-        ));
-        button.setMaximumSize(new Dimension(300, 60));
-        button.setMinimumSize(new Dimension(300, 60));
-        button.setPreferredSize(new Dimension(300, 60));
-
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(130, 60, 0, 200));
-                button.setForeground(Color.WHITE);
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(80, 40, 0, 180));
-                button.setForeground(new Color(255, 255, 200));
-            }
-        });
-        return button;
     }
 }

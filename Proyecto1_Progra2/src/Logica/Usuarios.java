@@ -4,61 +4,63 @@
  */
 package Logica;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 
-/**
- *
- * @author Nathan
- */
 public class Usuarios {
 
     private String usuario;
-
-    private char[] contra;
-    private static final int maxIngresos = 20;
+    private char[] contra; 
+    private int puntos;
+    private String fechaCreacion;
+    private boolean estado;
 
     public Usuarios(String usuario, char[] contra) {
         this.usuario = usuario;
-        this.contra = contra.clone();
+        this.contra = Arrays.copyOf(contra, contra.length); 
+        this.puntos = 0;
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        this.fechaCreacion = sdf.format(new Date());
+        this.estado = true; 
+    }
+
+    public static void limpiarContrasena(char[] array) {
+        if (array != null) {
+            Arrays.fill(array, ' ');
+        }
     }
 
     public String getUsuario() {
         return usuario;
     }
 
-    public char[] getContra() {
-        return contra.clone();
+    public char[] getContrasena() {
+        return contra;
     }
 
-    public void setUsuario(String nuevoUsuario) {
-        this.usuario = nuevoUsuario;
+    public void setContrasena(char[] nuevaContrasena) {
+        limpiarContrasena(this.contra); 
+        this.contra = Arrays.copyOf(nuevaContrasena, nuevaContrasena.length);
     }
 
-    public void setContra(char[] nuevaContra) {
-
-        if (this.contra != null) {
-            Arrays.fill(this.contra, '0');
-        }
-        this.contra = nuevaContra.clone();
+    public int getPuntos() {
+        return puntos;
     }
 
-    public boolean confirmarcontra(char[] inputcontra) {
-        return Arrays.equals(this.contra, inputcontra);
+    public void setPuntos(int puntos) {
+        this.puntos = puntos;
     }
 
-    public static void limpiarContrasena(char[] password) {
-        if (password != null) {
-            Arrays.fill(password, '0');
-        }
+    public String getFechaCreacion() {
+        return fechaCreacion;
     }
 
-    public void limpiarContrasenaAlmacenada() {
-        limpiarContrasena(this.contra);
+    public boolean getEstado() {
+        return estado;
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        limpiarContrasenaAlmacenada();
-        super.finalize();
+    public void setEstado(boolean estado) {
+        this.estado = estado;
     }
 }
