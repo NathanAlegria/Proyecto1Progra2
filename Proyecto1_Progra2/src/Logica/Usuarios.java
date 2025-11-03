@@ -8,21 +8,26 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 
+/**
+ *
+ * @author Nathan
+ */
+
 public class Usuarios {
 
     private String usuario;
-    private char[] contra; 
+    private char[] contra;
     private int puntos;
     private String fechaCreacion;
     private boolean estado;
 
     public Usuarios(String usuario, char[] contra) {
         this.usuario = usuario;
-        this.contra = Arrays.copyOf(contra, contra.length); 
+        this.contra = Arrays.copyOf(contra, contra.length);
         this.puntos = 0;
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         this.fechaCreacion = sdf.format(new Date());
-        this.estado = true; 
+        this.estado = true;
     }
 
     public static void limpiarContrasena(char[] array) {
@@ -40,7 +45,7 @@ public class Usuarios {
     }
 
     public void setContrasena(char[] nuevaContrasena) {
-        limpiarContrasena(this.contra); 
+        limpiarContrasena(this.contra);
         this.contra = Arrays.copyOf(nuevaContrasena, nuevaContrasena.length);
     }
 

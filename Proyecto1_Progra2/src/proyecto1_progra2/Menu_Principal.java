@@ -4,6 +4,7 @@
  */
 package proyecto1_progra2;
 
+import Logica.InterfaceCuentas;
 import Logica.Usuarios;
 import Logica.Cuentas;
 import javax.swing.*;
@@ -13,7 +14,11 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+import javax.swing.table.DefaultTableModel;
+/**
+ *
+ * @author Nathan
+ */
 public class Menu_Principal extends JFrame {
 
     private Image backgroundImage;
@@ -24,7 +29,7 @@ public class Menu_Principal extends JFrame {
     private CardLayout cards;
     private JPanel cardPanel;
     private Logica.Usuarios usuarioActual;
-    private Logica.Cuentas sistemaCuentas;
+    private Logica.InterfaceCuentas sistemaCuentas;
 
     private JPasswordField actualPassField;
     private JPasswordField nuevaPassField;
@@ -163,7 +168,7 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    public Menu_Principal(Logica.Cuentas sistemaCuentas) {
+    public Menu_Principal(Logica.InterfaceCuentas sistemaCuentas) {
         this.sistemaCuentas = sistemaCuentas;
 
         setTitle("🏰 Vampire Wargame 📜");
@@ -423,12 +428,20 @@ public class Menu_Principal extends JFrame {
 
         c.gridy++;
         JButton cambiarPassBtn = new SubOptionButton("Cambiar Contraseña");
-        cambiarPassBtn.addActionListener(e -> cards.show(cardPanel, "CambiarPass"));
+        cambiarPassBtn.addActionListener(e -> {
+            if (actualPassField != null) actualPassField.setText("");
+            if (nuevaPassField != null) nuevaPassField.setText("");
+            if (confirmarNuevaPassField != null) confirmarNuevaPassField.setText("");
+            cards.show(cardPanel, "CambiarPass");
+        });
         subPanel.add(cambiarPassBtn, c);
 
         c.gridy++;
         JButton cerrarCuentaBtn = new SubOptionButton("Cerrar mi Cuenta");
-        cerrarCuentaBtn.addActionListener(e -> cards.show(cardPanel, "CerrarCuenta"));
+        cerrarCuentaBtn.addActionListener(e -> {
+            if (cerrarCuentaPassField != null) cerrarCuentaPassField.setText("");
+            cards.show(cardPanel, "CerrarCuenta");
+        });
         subPanel.add(cerrarCuentaBtn, c);
 
         c.gridy++;
@@ -458,12 +471,14 @@ public class Menu_Principal extends JFrame {
         c.insets = new Insets(10, 10, 10, 10);
 
         c.gridy++;
-        JButton rankingBtn = new SubOptionButton("Ranking Jugadores");
-        rankingBtn.addActionListener(e -> cards.show(cardPanel, "Ranking"));
+        JButton rankingBtn = new SubOptionButton("Ranking de Jugadores");
+        rankingBtn.addActionListener(e -> {
+            cards.show(cardPanel, "Ranking");
+        });
         subPanel.add(rankingBtn, c);
 
         c.gridy++;
-        JButton logsBtn = new SubOptionButton("Logs de mis últimos juegos");
+        JButton logsBtn = new SubOptionButton("Logs de Juegos");
         logsBtn.addActionListener(e -> cards.show(cardPanel, "LogsJuegos"));
         subPanel.add(logsBtn, c);
 
@@ -480,24 +495,28 @@ public class Menu_Principal extends JFrame {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(true);
         panel.setBackground(new Color(0, 0, 0, 150));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(8, 8, 8, 8);
-        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(10, 10, 10, 10);
         c.gridx = 0;
         c.gridwidth = 2;
+        c.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel titleLabel = new JLabel("CAMBIAR CONTRASEÑA");
         titleLabel.setForeground(new Color(255, 215, 0));
         titleLabel.setFont(new Font("Serif", Font.BOLD, 30));
         c.gridy = 0;
+        c.insets = new Insets(0, 0, 25, 0);
         panel.add(titleLabel, c);
-
+        c.insets = new Insets(10, 10, 10, 10);
+        c.gridwidth = 2;
+        
         c.gridy++;
         JLabel actualLabel = new JLabel("Contraseña Actual:");
         actualLabel.setForeground(new Color(200, 200, 200));
         panel.add(actualLabel, c);
-
+        
         c.gridy++;
         actualPassField = new JPasswordField(15);
         setTextFieldSize(actualPassField);
@@ -507,16 +526,16 @@ public class Menu_Principal extends JFrame {
         JLabel nuevaLabel = new JLabel("Nueva Contraseña (5 caracteres):");
         nuevaLabel.setForeground(new Color(200, 200, 200));
         panel.add(nuevaLabel, c);
-
+        
         c.gridy++;
         nuevaPassField = new JPasswordField(15);
         setTextFieldSize(nuevaPassField);
         panel.add(nuevaPassField, c);
 
         c.gridy++;
-        JLabel confirmarLabel = new JLabel("Confirmar Nueva Contraseña:");
-        confirmarLabel.setForeground(new Color(200, 200, 200));
-        panel.add(confirmarLabel, c);
+        JLabel confirmarNuevaLabel = new JLabel("Confirmar Nueva Contraseña:");
+        confirmarNuevaLabel.setForeground(new Color(200, 200, 200));
+        panel.add(confirmarNuevaLabel, c);
 
         c.gridy++;
         confirmarNuevaPassField = new JPasswordField(15);
@@ -526,7 +545,40 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         c.gridwidth = 1;
         JButton cambiarBtn = new ThemedButton("Cambiar");
-        cambiarBtn.addActionListener(e -> handlePasswordChange());
+        cambiarBtn.addActionListener(e -> {
+            char[] actual = actualPassField.getPassword();
+            char[] nueva = nuevaPassField.getPassword();
+            char[] confirmar = confirmarNuevaPassField.getPassword();
+
+            if (actual.length == 0 || nueva.length == 0 || confirmar.length == 0) {
+                JOptionPane.showMessageDialog(Menu_Principal.this, "Todos los campos deben ser llenados.", "Faltan Datos", JOptionPane.WARNING_MESSAGE);
+                Usuarios.limpiarContrasena(actual);
+                Usuarios.limpiarContrasena(nueva);
+                Usuarios.limpiarContrasena(confirmar);
+                return;
+            }
+
+            if (!java.util.Arrays.equals(nueva, confirmar)) {
+                JOptionPane.showMessageDialog(Menu_Principal.this, "La nueva contraseña y su confirmación no coinciden.", "Error", JOptionPane.WARNING_MESSAGE);
+                nuevaPassField.setText("");
+                confirmarNuevaPassField.setText("");
+                Usuarios.limpiarContrasena(actual);
+                Usuarios.limpiarContrasena(nueva);
+                Usuarios.limpiarContrasena(confirmar);
+                return;
+            }
+            
+            if (sistemaCuentas.cambiarContrasena(usuarioActual.getUsuario(), actual, nueva)) {
+                actualPassField.setText("");
+                nuevaPassField.setText("");
+                confirmarNuevaPassField.setText("");
+                cards.show(cardPanel, "MiCuentaSubMenu");
+            } 
+            
+            Usuarios.limpiarContrasena(actual);
+            Usuarios.limpiarContrasena(nueva);
+            Usuarios.limpiarContrasena(confirmar);
+        });
         panel.add(cambiarBtn, c);
 
         c.gridx = 1;
@@ -542,84 +594,34 @@ public class Menu_Principal extends JFrame {
         return panel;
     }
 
-    private void handlePasswordChange() {
-        if (this.usuarioActual == null) {
-            JOptionPane.showMessageDialog(Menu_Principal.this, "Error de Sesión: No se ha iniciado sesión correctamente. Vuelva a Log In.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        char[] oldPass = actualPassField.getPassword();
-        char[] newPass = nuevaPassField.getPassword();
-        char[] confPass = confirmarNuevaPassField.getPassword();
-
-        if (oldPass.length == 0 || newPass.length == 0 || confPass.length == 0) {
-            JOptionPane.showMessageDialog(Menu_Principal.this, "Todos los campos son obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
-            Logica.Usuarios.limpiarContrasena(oldPass);
-            Logica.Usuarios.limpiarContrasena(newPass);
-            Logica.Usuarios.limpiarContrasena(confPass);
-            return;
-        }
-
-        if (!java.util.Arrays.equals(newPass, confPass)) {
-            JOptionPane.showMessageDialog(Menu_Principal.this, "Las nuevas contraseñas no coinciden.", "Error", JOptionPane.ERROR_MESSAGE);
-            Logica.Usuarios.limpiarContrasena(oldPass);
-            Logica.Usuarios.limpiarContrasena(newPass);
-            Logica.Usuarios.limpiarContrasena(confPass);
-            return;
-        }
-
-        if (sistemaCuentas.cambiarContrasena(this.usuarioActual.getUsuario(), oldPass, newPass)) {
-            JOptionPane.showMessageDialog(Menu_Principal.this, "Contraseña cambiada exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            cards.show(cardPanel, "MiCuentaSubMenu");
-        }
-
-        actualPassField.setText("");
-        nuevaPassField.setText("");
-        confirmarNuevaPassField.setText("");
-    }
-
     private JPanel buildCerrarCuentaPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(true);
         panel.setBackground(new Color(0, 0, 0, 150));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(8, 8, 8, 8);
-        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(10, 10, 10, 10);
         c.gridx = 0;
         c.gridwidth = 2;
+        c.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel titleLabel = new JLabel("CERRAR MI CUENTA");
+        JLabel titleLabel = new JLabel("CERRAR CUENTA");
         titleLabel.setForeground(new Color(255, 215, 0));
         titleLabel.setFont(new Font("Serif", Font.BOLD, 30));
         c.gridy = 0;
+        c.insets = new Insets(0, 0, 25, 0);
         panel.add(titleLabel, c);
+        c.insets = new Insets(10, 10, 10, 10);
 
         c.gridy++;
-        JTextArea warningArea = new JTextArea(
-                "¡ADVERTENCIA!\n"
-                + "Esta acción es irreversible.\n"
-                + "Tu nombre y puntos se guardarán en el ranking."
-        );
-        warningArea.setFont(new Font("Serif", Font.PLAIN, 14));
-        warningArea.setForeground(new Color(255, 215, 0));
-        warningArea.setBackground(new Color(0, 0, 0, 0));
-        warningArea.setOpaque(false);
-        warningArea.setEditable(false);
-        warningArea.setWrapStyleWord(true);
-        warningArea.setLineWrap(true);
-        warningArea.setRows(3);
-        warningArea.setColumns(20);
-        JPanel warningPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        warningPanel.setOpaque(false);
-        warningPanel.add(warningArea);
-
-        c.insets = new Insets(15, 8, 15, 8);
-        panel.add(warningPanel, c);
-        c.insets = new Insets(8, 8, 8, 8);
+        JLabel warningLabel = new JLabel("<html><div style='text-align: center;'>Advertencia: Esta acción es **permanente** y desactivará tu cuenta.<br>Ingresa tu contraseña para confirmar.</div></html>");
+        warningLabel.setForeground(new Color(255, 100, 100));
+        warningLabel.setFont(new Font("Serif", Font.BOLD, 14));
+        panel.add(warningLabel, c);
 
         c.gridy++;
-        JLabel passLabel = new JLabel("Ingresa tu contraseña para confirmar:");
+        JLabel passLabel = new JLabel("Contraseña:");
         passLabel.setForeground(new Color(200, 200, 200));
         panel.add(passLabel, c);
 
@@ -631,12 +633,41 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         c.gridwidth = 1;
         JButton cerrarBtn = new ThemedButton("Cerrar Cuenta");
-        cerrarBtn.setBackground(new Color(150, 0, 0, 180));
-        cerrarBtn.addActionListener(e -> handleAccountDeletion());
+        cerrarBtn.addActionListener(e -> {
+            char[] contrasena = cerrarCuentaPassField.getPassword();
+
+            if (contrasena.length == 0) {
+                JOptionPane.showMessageDialog(Menu_Principal.this, "Debes ingresar tu contraseña para confirmar.", "Faltan Datos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            int confirm = JOptionPane.showConfirmDialog(
+                Menu_Principal.this, 
+                "¿Estás seguro de que quieres desactivar permanentemente tu cuenta?", 
+                "Confirmar Cierre de Cuenta", 
+                JOptionPane.YES_NO_OPTION, 
+                JOptionPane.WARNING_MESSAGE
+            );
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                if (sistemaCuentas.eliminarUsuario(usuarioActual.getUsuario(), contrasena)) {
+                    cerrarCuentaPassField.setText("");
+                    Usuarios.limpiarContrasena(contrasena);
+                    JOptionPane.showMessageDialog(Menu_Principal.this, "Tu cuenta ha sido cerrada. Volviendo a la pantalla de Login.", "Cuenta Cerrada", JOptionPane.INFORMATION_MESSAGE);
+                    returnToLogin();
+                } else {
+                    cerrarCuentaPassField.setText("");
+                    Usuarios.limpiarContrasena(contrasena);
+                }
+            } else {
+                cerrarCuentaPassField.setText("");
+                Usuarios.limpiarContrasena(contrasena);
+            }
+        });
         panel.add(cerrarBtn, c);
 
         c.gridx = 1;
-        JButton backBtn = new ThemedButton("Cancelar");
+        JButton backBtn = new ThemedButton("Volver");
         backBtn.addActionListener(e -> {
             cerrarCuentaPassField.setText("");
             cards.show(cardPanel, "MiCuentaSubMenu");
@@ -646,89 +677,81 @@ public class Menu_Principal extends JFrame {
         return panel;
     }
 
-    private void handleAccountDeletion() {
-        if (this.usuarioActual == null) {
-            JOptionPane.showMessageDialog(Menu_Principal.this, "Error de Sesión: No se ha iniciado sesión correctamente. Vuelva a Log In.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        char[] pass = cerrarCuentaPassField.getPassword();
-
-        if (pass.length == 0) {
-            JOptionPane.showMessageDialog(Menu_Principal.this, "Debes ingresar tu contraseña para confirmar.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(
-                Menu_Principal.this,
-                "¿Estás absolutamente seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
-                "Confirmar Eliminación",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
-        );
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            if (sistemaCuentas.eliminarUsuario(this.usuarioActual.getUsuario(), pass)) {
-                returnToLogin();
+   private JPanel buildRankingPanel() {
+        ArrayList<Usuarios> rankingData = sistemaCuentas.getRankingData();
+        
+        // MODIFICACIÓN: Uso de Lambda para ordenar los puntos de forma descendente (sin Comparator.comparingInt)
+        rankingData.sort((u1, u2) -> Integer.compare(u2.getPuntos(), u1.getPuntos()));
+        
+        String[] columnNames = {"#", "Jugador", "Puntos"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
             }
+        };
+
+        int rank = 1;
+        for (Usuarios user : rankingData) {
+            model.addRow(new Object[]{
+                rank++, 
+                user.getUsuario(), 
+                user.getPuntos()
+            });
         }
+        
+        JTable table = new JTable(model);
+        table.setFont(new Font("Serif", Font.PLAIN, 16));
+        table.setForeground(Color.WHITE);
+        table.setBackground(new Color(30, 15, 60, 200));
+        table.setRowHeight(30);
+        table.getTableHeader().setFont(new Font("Serif", Font.BOLD, 18));
+        table.getTableHeader().setBackground(new Color(150, 80, 0));
+        table.getTableHeader().setForeground(Color.BLACK);
+        table.setShowGrid(false);
 
-        cerrarCuentaPassField.setText("");
-    }
+        table.getColumnModel().getColumn(0).setPreferredWidth(50);
+        table.getColumnModel().getColumn(1).setPreferredWidth(200);
+        table.getColumnModel().getColumn(2).setPreferredWidth(150);
 
-    private JPanel buildRankingPanel() {
-        JPanel rankingContent = new JPanel(new BorderLayout());
-        rankingContent.setOpaque(true);
-        rankingContent.setBackground(new Color(0, 0, 0, 150));
-
-        rankingContent.setPreferredSize(new Dimension(650, 500));
-        rankingContent.setMaximumSize(new Dimension(650, 500));
-
-
-        ArrayList<Logica.Usuarios> todosLosJugadores = sistemaCuentas.getRankingData();
-
-        todosLosJugadores.sort((u1, u2) -> Integer.compare(u2.getPuntos(), u1.getPuntos()));
-
-        String[] columnNames = {"POSICIÓN", "NOMBRE DE JUGADOR", "PUNTOS"};
-        Object[][] data = new Object[todosLosJugadores.size()][3];
-
-        for (int i = 0; i < todosLosJugadores.size(); i++) {
-            Logica.Usuarios user = todosLosJugadores.get(i);
-            data[i][0] = i + 1;
-            data[i][1] = user.getUsuario();
-            data[i][2] = String.format("%,d", user.getPuntos());
-        }
-
-        JTable rankingTable = new JTable(data, columnNames);
-        rankingTable.setFont(new Font("Monospaced", Font.PLAIN, 14));
-        rankingTable.setForeground(Color.WHITE);
-        rankingTable.setBackground(new Color(0, 0, 0, 180));
-        rankingTable.setRowHeight(25);
-        rankingTable.getTableHeader().setFont(new Font("Monospaced", Font.BOLD, 16));
-        rankingTable.getTableHeader().setBackground(new Color(80, 40, 0, 200));
-        rankingTable.getTableHeader().setForeground(new Color(255, 215, 0));
-        rankingTable.setEnabled(false);
-
-        rankingTable.getColumnModel().getColumn(0).setPreferredWidth(80);
-        rankingTable.getColumnModel().getColumn(1).setPreferredWidth(150);
-        rankingTable.getColumnModel().getColumn(2).setPreferredWidth(120);
-
-        JScrollPane scrollPane = new JScrollPane(rankingTable);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setPreferredSize(new Dimension(450, 400));
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(new Color(30, 15, 60, 200));
 
-        rankingContent.add(scrollPane, BorderLayout.CENTER);
+        JPanel contentPanel = new JPanel(new GridBagLayout());
+        contentPanel.setOpaque(true);
+        contentPanel.setBackground(new Color(0, 0, 0, 150));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(10, 10, 10, 10);
+        c.gridx = 0;
+        c.gridy = 0;
+        c.fill = GridBagConstraints.BOTH;
+        c.weightx = 1.0;
+        c.weighty = 0.0;
+        
+        JLabel titleLabel = new JLabel("RANKING DE JUGADORES");
+        titleLabel.setForeground(new Color(255, 215, 0));
+        titleLabel.setFont(new Font("Serif", Font.BOLD, 30));
+        c.insets = new Insets(0, 0, 20, 0);
+        contentPanel.add(titleLabel, c);
+        
+        c.gridy++;
+        c.weighty = 1.0;
+        c.fill = GridBagConstraints.BOTH;
+        c.insets = new Insets(10, 0, 20, 0);
+        contentPanel.add(scrollPane, c);
+
+        c.gridy++;
+        c.weighty = 0.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(20, 0, 0, 0);
         JButton backBtn = new ThemedButton("Volver al Menú Anterior");
         backBtn.addActionListener(e -> cards.show(cardPanel, "ReportesSubMenu"));
+        contentPanel.add(backBtn, c);
 
-        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        southPanel.setOpaque(true);
-        southPanel.setBackground(new Color(0, 0, 0, 150));
-        southPanel.add(backBtn);
-        rankingContent.add(southPanel, BorderLayout.SOUTH);
-
-        return new RankingBackgroundPanel(rankingContent);
+        return contentPanel;
     }
 }

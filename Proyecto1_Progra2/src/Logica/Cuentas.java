@@ -11,7 +11,7 @@ import javax.swing.JOptionPane;
  *
  * @author Nathan
  */
-public class Cuentas {
+public class Cuentas implements InterfaceCuentas { 
 
     private static Cuentas instancia;
     private ArrayList<Usuarios> listaUsuarios;
@@ -27,6 +27,7 @@ public class Cuentas {
         return instancia;
     }
 
+    
     public boolean registrarUsuario(String usuario, char[] contrasena) {
         if (buscarUsuario(usuario) != null) {
             JOptionPane.showMessageDialog(null, "El nombre de usuario ya existe.", "Error de Registro", JOptionPane.ERROR_MESSAGE);
@@ -44,6 +45,7 @@ public class Cuentas {
         return true;
     }
 
+    
     public boolean verificarCredenciales(String usuario, char[] contrasena) {
         Usuarios user = buscarUsuario(usuario);
         if (user == null || !user.getEstado()) {
@@ -57,6 +59,7 @@ public class Cuentas {
         return match;
     }
 
+    
     public Usuarios buscarUsuario(String usuario) {
         for (Usuarios user : listaUsuarios) {
             if (user.getUsuario().equalsIgnoreCase(usuario)) {
@@ -66,6 +69,7 @@ public class Cuentas {
         return null;
     }
 
+    
     public boolean cambiarContrasena(String usuario, char[] contrasenaAntigua, char[] contrasenaNueva) {
         Usuarios user = buscarUsuario(usuario);
 
@@ -88,6 +92,7 @@ public class Cuentas {
         }
     }
 
+    
     public boolean eliminarUsuario(String usuario, char[] contrasena) {
         Usuarios user = buscarUsuario(usuario);
 
@@ -106,6 +111,7 @@ public class Cuentas {
         }
     }
 
+    
     public ArrayList<Usuarios> getRankingData() {
         ArrayList<Usuarios> activos = new ArrayList<>();
         for (Usuarios user : listaUsuarios) {

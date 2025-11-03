@@ -16,7 +16,11 @@ import javax.imageio.ImageIO;
 import java.util.Arrays;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+import Logica.InterfaceCuentas;
+/**
+ *
+ * @author Nathan
+ */
 public class Menu extends JFrame {
 
     private Image backgroundImage;
@@ -29,7 +33,7 @@ public class Menu extends JFrame {
     private JTextField registerUserField;
     private JPasswordField registerPassField;
     private JPasswordField registerConfPassField;
-    private Cuentas sistemaCuentas;
+    private InterfaceCuentas sistemaCuentas;
 
     private class BackgroundPanel extends JPanel {
 
@@ -132,10 +136,9 @@ public class Menu extends JFrame {
             backgroundImage = ImageIO.read(getClass().getResource("/Imagenes/fondo.jpg"));
             buttonImage = ImageIO.read(getClass().getResource("/Imagenes/botones.jpg"));
             buttonHoverImage = ImageIO.read(getClass().getResource("/Imagenes/botones.jpg")); 
-            subTitleBackgroundImage = ImageIO.read(getClass().getResource("/Imagenes/subT.jpg")); 
+            subTitleBackgroundImage = ImageIO.read(getClass().getResource("/Imagenes/subT.jpg"));  
 
         } catch (IOException | IllegalArgumentException e) {
-            System.err.println("Error al cargar la imagen de fondo o botones: " + e.getMessage());
             JOptionPane.showMessageDialog(this, "No se pudo cargar la imagen de fondo o botones. Asegúrate de que los archivos estén en el paquete 'Imagenes'.", "Error de Recurso", JOptionPane.ERROR_MESSAGE);
         }
 
@@ -283,14 +286,14 @@ public class Menu extends JFrame {
 
             if (usuarioIngresado.isEmpty()) {
                 JOptionPane.showMessageDialog(Menu.this, "Ingresa tu nombre de usuario.", "Faltan datos", JOptionPane.WARNING_MESSAGE);
-                Logica.Usuarios.limpiarContrasena(contraIngresada);
+                Usuarios.limpiarContrasena(contraIngresada);
                 loginPassField.setText("");
                 return;
             }
 
             if (contraIngresada.length == 0) {
                 JOptionPane.showMessageDialog(Menu.this, "Ingresa tu contraseña.", "Faltan datos", JOptionPane.WARNING_MESSAGE);
-                Logica.Usuarios.limpiarContrasena(contraIngresada); 
+                Usuarios.limpiarContrasena(contraIngresada);  
                 loginPassField.setText("");
                 return;
             }
@@ -302,7 +305,7 @@ public class Menu extends JFrame {
                 
                 Menu.this.setVisible(false);
                 
-                Logica.Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuarioIngresado);
+                Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuarioIngresado);
                 Menu_Principal menuPrincipal = new Menu_Principal(sistemaCuentas);
                 menuPrincipal.iniciarMenu(usuarioLogeado);
             } else {
@@ -406,7 +409,7 @@ public class Menu extends JFrame {
                 
                 Menu.this.setVisible(false);
                 
-                Logica.Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuario);
+                Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuario);
                 Menu_Principal menuPrincipal = new Menu_Principal(sistemaCuentas);
                 menuPrincipal.iniciarMenu(usuarioLogeado);
 
