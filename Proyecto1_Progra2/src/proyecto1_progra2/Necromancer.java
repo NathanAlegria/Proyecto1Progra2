@@ -11,9 +11,9 @@ import javax.swing.JOptionPane;
  
 public class Necromancer extends Pieza {
     
-    // Necromancer: 4 ataque, 5 vida, 3 escudo
+    // Necromancer: 4 ataque, 3 vida, 1 escudo
     public Necromancer(String color) {
-        super("Necromancer", color, 4, 5, 3);
+        super("Necromancer", color, 4, 3, 1);
     }
     
     // Se mueve 1 casilla
@@ -28,12 +28,12 @@ public class Necromancer extends Pieza {
         JOptionPane.showMessageDialog(null, "¡" + this.nombre + " ha conjurado un Zombie en (" + nuevaX + ", " + nuevaY + ")!");
     }
     
-    // Ataque Especial: Lanza (Lance)
+    // Ataque Especial: Lanza
     public void lanzarLanza(Pieza piezaEnemiga) {
-        // Potencia: Mitad del ataque normal (4/2 = 2 puntos)
+        //Mitad del ataque normal
         int dano = this.ataqueNormal / 2; // 2 puntos
         
-        // CRÍTICO: Ignora el escudo
+        //Ignora el escudo
         piezaEnemiga.restarVidaIgnorandoEscudo(dano);
         
         JOptionPane.showMessageDialog(null, "Necromancer lanza LANZA a " + piezaEnemiga.nombre + ". Daño crítico: " + dano +

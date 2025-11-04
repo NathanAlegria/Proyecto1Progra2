@@ -10,9 +10,9 @@ package proyecto1_progra2;
  */
 public class HombreLobo extends Pieza {
     
-    // Hombre Lobo: 5 ataque, 5 vida, 5 escudo
+    // Hombre Lobo: 5 ataque, 5 vida, 2 escudo
     public HombreLobo(String color) {
-        super("HombreLobo", color, 5, 5, 5);
+        super("HombreLobo", color, 5, 5, 2);
     }
 
     // Se mueve hasta 2 casillas

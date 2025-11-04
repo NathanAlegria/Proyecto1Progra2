@@ -201,7 +201,7 @@ public class Menu_Principal extends JFrame {
         cardPanel.add(buildCambiarPassPanel(), "CambiarPass");
         cardPanel.add(buildCerrarCuentaPanel(), "CerrarCuenta");
         cardPanel.add(buildRankingPanel(), "Ranking");
-        cardPanel.add(buildEmptyPanel("Logs de Juegos", "ReportesSubMenu"), "LogsJuegos");
+        
 
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -252,7 +252,12 @@ public class Menu_Principal extends JFrame {
         this.dispose(); 
         SwingUtilities.invokeLater(() -> new Menu().setVisible(true));
     }
-
+    
+    private  void Juego() {
+        this.dispose();
+            SwingUtilities.invokeLater(() -> new Tablero().setVisible(true));
+    }
+    
     private void actualizarInfoUsuario() {
         if (usuarioActual != null) {
             String estadoStr = usuarioActual.getEstado() ? "Activo" : "Inactivo";
@@ -330,37 +335,10 @@ public class Menu_Principal extends JFrame {
         return y + 1;
     }
 
-    private JPanel buildEmptyPanel(String title, String backCard) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(true);
-        panel.setBackground(new Color(0, 0, 0, 150));
-
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 10, 10, 10);
-        c.gridy = 0;
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setForeground(new Color(255, 215, 0));
-        titleLabel.setFont(new Font("Serif", Font.BOLD, 30));
-        panel.add(titleLabel, c);
-
-        c.gridy++;
-        JLabel tempLabel = new JLabel("Funcionalidad de " + title + " pendiente de implementación.");
-        tempLabel.setForeground(Color.WHITE);
-        panel.add(tempLabel, c);
-
-        c.gridy++;
-        JButton backBtn = new ThemedButton("Volver al Menú Anterior");
-        backBtn.addActionListener(e -> cards.show(cardPanel, backCard));
-        panel.add(backBtn, c);
-
-        return panel;
-    }
-
     private JPanel buildMainMenu() {
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setOpaque(true);
-        mainPanel.setBackground(new Color(0, 0, 0, 150));
+        JPanel TableroJ = new JPanel(new GridBagLayout());
+        TableroJ.setOpaque(true);
+        TableroJ.setBackground(new Color(0, 0, 0, 150));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.gridx = 0;
@@ -372,23 +350,26 @@ public class Menu_Principal extends JFrame {
         currentUserNameLabel.setFont(new Font("Serif", Font.BOLD, 18));
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 20, 0);
-        mainPanel.add(currentUserNameLabel, gbc);
+        TableroJ.add(currentUserNameLabel, gbc);
         gbc.insets = new Insets(10, 10, 10, 10);
 
         gbc.gridy = 1;
         JButton jugarBtn = new ThemedButton("JUGAR VAMPIRE WARGAME");
-        jugarBtn.addActionListener(e -> JOptionPane.showMessageDialog(Menu_Principal.this, "Iniciando juego...", "Jugar", JOptionPane.INFORMATION_MESSAGE));
-        mainPanel.add(jugarBtn, gbc);
+        jugarBtn.addActionListener(e -> {
+            Juego();
+        });
+        gbc.insets = new Insets(20, 10, 10, 10);
+        TableroJ.add(jugarBtn, gbc);
 
         gbc.gridy = 2;
         JButton cuentaBtn = new ThemedButton("MI CUENTA ❯");
         cuentaBtn.addActionListener(e -> cards.show(cardPanel, "MiCuentaSubMenu"));
-        mainPanel.add(cuentaBtn, gbc);
+        TableroJ.add(cuentaBtn, gbc);
 
         gbc.gridy = 3;
         JButton reportesBtn = new ThemedButton("REPORTES ❯");
         reportesBtn.addActionListener(e -> cards.show(cardPanel, "ReportesSubMenu"));
-        mainPanel.add(reportesBtn, gbc);
+        TableroJ.add(reportesBtn, gbc);
 
         gbc.gridy = 4;
         JButton logOutBtn = new ThemedButton("LOG OUT");
@@ -396,9 +377,9 @@ public class Menu_Principal extends JFrame {
             returnToLogin();
         });
         gbc.insets = new Insets(20, 10, 10, 10);
-        mainPanel.add(logOutBtn, gbc);
+        TableroJ.add(logOutBtn, gbc);
 
-        return mainPanel;
+        return TableroJ;
     }
 
     private JPanel buildMiCuentaSubMenu() {
@@ -615,6 +596,7 @@ public class Menu_Principal extends JFrame {
         c.insets = new Insets(10, 10, 10, 10);
 
         c.gridy++;
+        //*
         JLabel warningLabel = new JLabel("<html><div style='text-align: center;'>Advertencia: Esta acción es **permanente** y desactivará tu cuenta.<br>Ingresa tu contraseña para confirmar.</div></html>");
         warningLabel.setForeground(new Color(255, 100, 100));
         warningLabel.setFont(new Font("Serif", Font.BOLD, 14));
@@ -680,7 +662,7 @@ public class Menu_Principal extends JFrame {
    private JPanel buildRankingPanel() {
         ArrayList<Usuarios> rankingData = sistemaCuentas.getRankingData();
         
-        // MODIFICACIÓN: Uso de Lambda para ordenar los puntos de forma descendente (sin Comparator.comparingInt)
+        // MODIFICACIÓN: Uso de Lambda para ordenar los puntos de forma descendente 
         rankingData.sort((u1, u2) -> Integer.compare(u2.getPuntos(), u1.getPuntos()));
         
         String[] columnNames = {"#", "Jugador", "Puntos"};

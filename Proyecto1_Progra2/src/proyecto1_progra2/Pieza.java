@@ -12,13 +12,13 @@ import javax.swing.JOptionPane;
  */
 public abstract class Pieza {
 
-    // Atributos base
+    // Atributos
     protected String color;
     protected int ataqueNormal;
     protected int vida;
     protected int escudo;
-    protected int posicionX; // Ahora no se usan, el Tablero las maneja, pero se mantienen por modelo.
-    protected int posicionY; // Ahora no se usan, el Tablero las maneja, pero se mantienen por modelo.
+    protected int posicionX;
+    protected int posicionY;
     protected String nombre;
 
     // Constructor
@@ -30,11 +30,10 @@ public abstract class Pieza {
         this.escudo = escudo;
     }
 
-    // --- MÉTODOS REQUERIDOS ---
-    // Función Abstracta: Obliga a las subclases a definir cómo moverse
+    // Función Abstracta para movimiento
     public abstract boolean mover(int nuevaX, int nuevaY);
 
-    // Función Final: Lógica de ataque normal, no se puede sobrescribir
+    // Función Final para ataques normales
     public final void atacar(Pieza piezaEnemiga) {
         int dano = this.ataqueNormal;
         piezaEnemiga.restarVida(dano);
@@ -44,36 +43,34 @@ public abstract class Pieza {
     }
 
     // Lógica para usar la habilidad especial de la pieza (Polimorfismo)
-    // Se pasa el Tablero para que piezas como la Muerte puedan crear otras piezas.
     public void ataqueEspecial(Pieza piezaEnemiga, int casillaDestinoX, int casillaDestinoY, Tablero tablero) {
-        // Implementación base: Por defecto usa el ataque normal si no hay especial.
+        //Por defecto usa el ataque normal si no hay especial.
         this.atacar(piezaEnemiga);
     }
 
-    // --- LÓGICA DE DAÑO ---
     // Resta vida y escudo tras un ataque normal
     public void restarVida(int dano) {
         int restante = dano;
 
-        // 1. Gasta Escudo
+        // Gasta Escudo
         if (this.escudo > 0) {
             int escudoPerdido = Math.min(this.escudo, restante);
             this.escudo -= escudoPerdido;
             restante -= escudoPerdido;
         }
 
-        // 2. Gasta Vida
+        // Gasta Vida
         if (restante > 0) {
             this.vida -= restante;
         }
     }
 
-    // Método para restar vida IGNORANDO el escudo (usado por el ataque Lanza de la Muerte)
+    // Método para restar vida ignorando el escudo (usado por el ataque Lanza de la Muerte)
     public void restarVidaIgnorandoEscudo(int dano) {
         this.vida -= dano;
     }
 
-    // --- GETTERS ---
+    //Getters
     public int getVida() {
         return vida;
     }

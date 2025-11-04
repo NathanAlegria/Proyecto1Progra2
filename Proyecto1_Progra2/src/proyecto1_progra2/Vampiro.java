@@ -10,7 +10,7 @@ import javax.swing.JOptionPane;
  */
 public class Vampiro extends Pieza {
     
-    // Vampiro: 3 ataque, 4 vida, 5 escudo (Stats iniciales)
+    // Vampiro: 3 ataque, 4 vida, 5 escudo
     public Vampiro(String color) {
         super("Vampiro", color, 3, 4, 5);
     }
