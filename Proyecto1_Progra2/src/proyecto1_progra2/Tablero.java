@@ -4,143 +4,580 @@
  */
 package proyecto1_progra2;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.ImageIcon;
-import javax.swing.JOptionPane;
-import javax.swing.BorderFactory;
-import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Image;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.net.URL;
+import Logica.InterfaceCuentas;
+import Logica.Usuarios;
+
 
 /**
  *
  * @author Nathan
  */
-
 public class Tablero extends JFrame implements ActionListener {
 
-    //Atributos    
     private static final int FILAS = 6;
     private static final int COLUMNAS = 6;
-    // Color semi-transparente para resaltar movimientos
     private static final Color HIGHLIGHT_COLOR = new Color(0, 255, 0, 100);
-    
-    // Matriz de botones para el Tablero
+
     private JButton[][] botonesTablero;
-    
-    // Iconos para piezas NEGRAS
-    private ImageIcon iconHombreLoboNegro;
-    private ImageIcon iconVampiroNegro;
-    private ImageIcon iconNecromancerNegro;
-    private ImageIcon iconZombieNegro;
-    
-    // Iconos para piezas BLANCAS
-    private ImageIcon iconHombreLoboBlanco;
-    private ImageIcon iconVampiroBlanco;
-    private ImageIcon iconNecromancerBlanco;
-    private ImageIcon iconZombieBlanco;
-    
-    // Matriz para las piezas
-    private Pieza[][] estadoTablero;  
-    
-    // Pieza seleccionada para mover o atacar
+    private ImageIcon iconHombreLoboNegro, iconVampiroNegro, iconNecromancerNegro, iconZombieNegro;
+    private ImageIcon iconHombreLoboBlanco, iconVampiroBlanco, iconNecromancerBlanco, iconZombieBlanco;
+
+    public Pieza[][] estadoTablero;
+
     private Pieza piezaSeleccionada = null;
     private int selectedRow = -1;
     private int selectedCol = -1;
-    
-    // Control de turnos
-    private String jugadorActualColor = "Blanco";    
+
+    private String jugadorActualColor = "Blanco";
     private JLabel turnoLabel;
-        
-    
-    public Tablero() {
-        this.estadoTablero = new Pieza[FILAS][COLUMNAS];
-        
-        cargarIconos();    
+
+    // Ruleta
+    private final RuletaPanel ruletaPanel;
+    private final JButton botonRuleta;
+    private final JButton botonRendirse; // NUEVO BOTON
+    private JLabel girosRestantesLabel;
+
+    private String nombreJugadorBlanco;
+    private String nombreJugadorNegro;
+
+    private String piezaDelTurno = null;
+    private int girosRestantes = 0;
+    private boolean turnoEnCurso = false;
+
+    private InterfaceCuentas sistemaCuentas; // INTERFACE PARA PUNTOS Y USUARIOS
+
+    public Tablero(String jugadorBlanco, String jugadorNegro, InterfaceCuentas sistemaCuentas) {
+        this.estadoTablero = new Pieza[FILAS][COLUMNAS]; 
+        this.sistemaCuentas = sistemaCuentas;
+        this.nombreJugadorBlanco = jugadorBlanco;
+        this.nombreJugadorNegro = jugadorNegro;
+
+        cargarIconos();
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int screenHeight = screenSize.height;
         int windowHeight = screenHeight - 50;
-        int windowWidth = windowHeight + 200;
+        int windowWidth = windowHeight + 250;
 
         setTitle("Vampire Wargame - Partida");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(windowWidth, windowHeight);
         setLayout(new BorderLayout());
 
+        // Panel Principal
         JPanel panelPrincipal = new JPanel(new BorderLayout());
-
         JPanel panelTablero = new JPanel(new GridLayout(FILAS, COLUMNAS));
         botonesTablero = new JButton[FILAS][COLUMNAS];
-        
+
         Color colorClaro = new Color(240, 240, 240);
         Color colorOscuro = new Color(50, 50, 50);
-        
+
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
                 JButton boton = new JButton();
                 boton.setOpaque(true);
                 boton.setBorderPainted(false);
-                
-                if ((i + j) % 2 == 0) {
-                    boton.setBackground(colorClaro);
-                    boton.setForeground(colorOscuro);
-                } else {
-                    boton.setBackground(colorOscuro);
-                    boton.setForeground(colorClaro);
-                }
-                
-                boton.setFont(new Font("Arial", Font.BOLD, 10));    
-                
+                boton.setBackground((i + j) % 2 == 0 ? colorClaro : colorOscuro);
+                boton.setFont(new Font("Arial", Font.BOLD, 10));
                 boton.setActionCommand(i + "," + j);
                 boton.addActionListener(this);
-
                 botonesTablero[i][j] = boton;
                 panelTablero.add(boton);
             }
         }
-        
         panelPrincipal.add(panelTablero, BorderLayout.CENTER);
 
-        // Panel para el label del turno
+        // Panel de controles inferior
         JPanel panelControles = new JPanel();
         turnoLabel = new JLabel("Turno: " + jugadorActualColor + " | Controles: Ruleta y Mensajes");
-        panelControles.add(turnoLabel);    
+        panelControles.add(turnoLabel);
+
+        // Panel lateral para ruleta y botones
+        JPanel panelLateral = new JPanel();
+        panelLateral.setLayout(new BoxLayout(panelLateral, BoxLayout.Y_AXIS));
+        panelLateral.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panelLateral.setPreferredSize(new Dimension(250, windowHeight));
+
+        JLabel ruletaTitulo = new JLabel("Ruleta de Turno");
+        ruletaTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panelLateral.add(ruletaTitulo);
+
+        panelLateral.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        ruletaPanel = new RuletaPanel(this);
+        ruletaPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panelLateral.add(ruletaPanel);
+
+        panelLateral.add(Box.createRigidArea(new Dimension(0, 15))); // SEPARACION
+
+        // Botón Rendirse
+        botonRendirse = new JButton("Rendirse");
+        botonRendirse.setAlignmentX(Component.CENTER_ALIGNMENT);
+        botonRendirse.setBackground(Color.RED);
+        botonRendirse.setOpaque(true);
+        botonRendirse.setForeground(Color.WHITE);
+        botonRendirse.addActionListener(e -> rendirse());
+        panelLateral.add(botonRendirse);
+
+        panelLateral.add(Box.createRigidArea(new Dimension(0, 15))); // SEPARACION
+
+        // Botón Ruleta
+        botonRuleta = new JButton("GIRAR RULETA");
+        botonRuleta.setAlignmentX(Component.CENTER_ALIGNMENT);
+        botonRuleta.setOpaque(true);
+        botonRuleta.setBackground(Color.LIGHT_GRAY);
+        botonRuleta.addActionListener(e -> {
+            if (!turnoEnCurso) {
+                iniciarTurno();
+            } else if (ruletaPanel.isGirando()) {
+                ruletaPanel.detener();
+            } else {
+                JOptionPane.showMessageDialog(this, "Debes mover la pieza " + piezaDelTurno + " para terminar el turno.", "Mover Pieza", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+        panelLateral.add(botonRuleta);
+
+        panelLateral.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        girosRestantesLabel = new JLabel("Giros restantes: 0");
+        girosRestantesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panelLateral.add(girosRestantesLabel);
 
         add(panelPrincipal, BorderLayout.CENTER);
         add(panelControles, BorderLayout.SOUTH);
+        add(panelLateral, BorderLayout.EAST);
 
         setLocationRelativeTo(null);
         setVisible(true);
+
         inicializarPiezasEnTableroLogico();
-        actualizarTableroVisual();    
+        actualizarTableroVisual();
+        actualizarEstadoRuleta();
     }
-    
-    //Crea las piezas en el Tablero según su color
+
+    // ===========================================
+    // --- NUEVO MÉTODO PARA RENDIRSE ---
+    // ===========================================
+    private void rendirse() {
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "¿Deseas rendirte? El contrincante obtendrá 3 puntos.",
+                "Confirmar Rendirse",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            // Determinar el nombre del oponente según el turno actual
+            String nombreOponente = jugadorActualColor.equals("Blanco") ? nombreJugadorNegro : nombreJugadorBlanco;
+
+            // Buscar usuario real y sumar puntos
+            Usuarios oponente = sistemaCuentas.buscarUsuario(nombreOponente);
+            if (oponente != null) {
+                oponente.setPuntos(oponente.getPuntos() + 3);
+            }
+
+            // Volver al menú principal
+            this.dispose();
+            new Menu_Principal(sistemaCuentas);
+        }
+    }
+
+    // =======================================================================
+    // --- SOLUCIÓN PARA MENU_PRINCIPAL ---
+    // =======================================================================
+    /**
+     * Requerido por Menu_Principal para iniciar la lógica de juego.
+     * Implementación pública del método privado iniciarTurno().
+     */
+    public void iniciarTurno() {
+        if (turnoEnCurso) {
+            return;
+        }
+
+        // Calcula el número de giros que el jugador PUEDE hacer (1, 2 o 3)
+        // Se usa -1 porque el primer giro se cuenta al iniciarlo.
+        girosRestantes = calcularGirosBase() - 1;
+        turnoEnCurso = true;
+        piezaDelTurno = null;
+
+        botonRuleta.setText("DETENER RULETA");
+        actualizarEstadoRuleta();
+
+        // 2. Llamada a iniciarGiroDeTurno
+        ruletaPanel.iniciarGiroDeTurno();
+    }
+
+    /**
+     * Requerido por Menu_Principal para verificar el estado del turno.
+     */
+    public boolean isTurnoEnCurso() {
+        return turnoEnCurso;
+    }
+
+    // -----------------------------------------------------------------------
+    // --- LÓGICA DE RULETA Y CONTROL DE TURNO (Privado en el código original)---
+    // -----------------------------------------------------------------------
+    /**
+     * Calcula los giros base permitidos según las piezas perdidas.
+     */
+    private int calcularGirosBase() {
+        // Asumimos 6 piezas principales iniciales (3 tipos x 2 de cada uno = 6)
+        int piezasIniciales = 6;
+        int piezasActuales = 0;
+
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                Pieza p = estadoTablero[i][j];
+                // Solo cuenta las piezas principales (no Zombies) del jugador actual
+                if (p != null && p.getColor().equals(jugadorActualColor) && !p.getNombre().equals("Zombie")) {
+                    piezasActuales++;
+                }
+            }
+        }
+
+        int piezasPerdidas = piezasIniciales - piezasActuales;
+
+        if (piezasPerdidas >= 4) {
+            return 3; // 4+ piezas perdidas -> 3 giros
+        } else if (piezasPerdidas >= 2) {
+            return 2; // 2 o 3 piezas perdidas -> 2 giros
+        } else {
+            return 1; // 0 o 1 pieza perdida -> 1 giro
+        }
+    }
+
+    /**
+     * Maneja el resultado de la ruleta y la lógica de reintento.
+     */
+    public void manejarResultadoRuleta(String resultadoPieza) {
+        if (!turnoEnCurso) {
+            return;
+        } 
+
+        if (jugadorTienePieza(resultadoPieza)) {
+            // Éxito: El jugador tiene la pieza y puede moverla.
+            piezaDelTurno = resultadoPieza;
+            botonRuleta.setText("Mueve: " + piezaDelTurno);
+            JOptionPane.showMessageDialog(this, "¡Puedes mover cualquier pieza: " + piezaDelTurno + "!", "Pieza Seleccionada", JOptionPane.INFORMATION_MESSAGE);
+            girosRestantes = 0;
+            actualizarEstadoRuleta();
+        } else {
+            // Fracaso: El jugador no tiene la pieza seleccionada.
+            if (girosRestantes > 0) {
+                // Reintento: Gasta un giro extra.
+                girosRestantes--;
+                JOptionPane.showMessageDialog(this, "No tienes la pieza '" + resultadoPieza + "'. Reintentando... Giros restantes: " + (girosRestantes + 1), "Reintento", JOptionPane.WARNING_MESSAGE);
+                botonRuleta.setText("GIRAR RULETA");
+                actualizarEstadoRuleta();
+                ruletaPanel.iniciarGiroDeTurno(); // Nuevo giro
+            } else {
+                // Fracaso total: Pierde el turno.
+                JOptionPane.showMessageDialog(this, "No tienes la pieza '" + resultadoPieza + "'. Giros agotados. Pierdes el turno.", "Turno Perdido", JOptionPane.ERROR_MESSAGE);
+                finalizarTurno();
+            }
+        }
+    }
+
+    private boolean jugadorTienePieza(String nombrePieza) {
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                Pieza p = estadoTablero[i][j];
+                if (p != null && p.getColor().equals(jugadorActualColor) && p.getNombre().equals(nombrePieza)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void finalizarTurno() {
+        resetBorders();
+        cambiarTurno(true); // Se fuerza el cambio de turno
+        piezaDelTurno = null;
+        turnoEnCurso = false;
+        girosRestantes = 0;
+        botonRuleta.setText("GIRAR RULETA");
+        actualizarEstadoRuleta();
+        actualizarTableroVisual();
+    }
+
+    private void actualizarEstadoRuleta() {
+        girosRestantesLabel.setText("Giros restantes: " + (girosRestantes + 1));
+
+        // Controla el botón de la ruleta:
+        if (ruletaPanel.isGirando()) {
+            botonRuleta.setEnabled(true); // Permite Detener
+        } else if (piezaDelTurno != null && turnoEnCurso) {
+            botonRuleta.setEnabled(false); // Esperando el movimiento de pieza, no girar
+        } else {
+            botonRuleta.setEnabled(true); // Permite Iniciar el giro o reintentar
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // --- MANEJO DE CLIC DE TABLERO Y PIEZA SELECCIONADA ---
+    // -----------------------------------------------------------------------
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        try {
+            if (!turnoEnCurso || piezaDelTurno == null) {
+                JOptionPane.showMessageDialog(this, "Debes girar la ruleta y obtener una pieza para iniciar tu turno.", "Girar Ruleta", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String comando = e.getActionCommand();
+            String[] coordenadas = comando.split(",");
+            int r = Integer.parseInt(coordenadas[0]);
+            int c = Integer.parseInt(coordenadas[1]);
+
+            ManejoClick(r, c);
+        } catch (Exception ex) {
+            // Manejo de excepción más robusto
+            System.err.println("Error al manejar el clic: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Ocurrió un error inesperado al manejar el clic: " + ex.getMessage(), "Error de Juego", JOptionPane.ERROR_MESSAGE);
+            piezaSeleccionada = null;
+            selectedRow = -1;
+            selectedCol = -1;
+            actualizarTableroVisual();
+        }
+    }
+
+    private void ManejoClick(int Fila, int Columna) {
+
+        resetBorders();
+        boolean accionEjecutada = false;
+
+        if (piezaSeleccionada == null) {
+            // FASE 1: Selección de Pieza Propia
+
+            Pieza piezaEnCasilla = estadoTablero[Fila][Columna];
+
+            if (piezaEnCasilla != null
+                    && piezaEnCasilla.getColor().equals(jugadorActualColor)
+                    && piezaEnCasilla.getNombre().equals(piezaDelTurno) // <-- VALIDACIÓN CLAVE
+                    ) {
+                if (piezaEnCasilla.getNombre().equals("Zombie")) {
+                    JOptionPane.showMessageDialog(this, "El Zombie no puede ser movido ni atacado directamente.", "Reglas del Zombie", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                piezaSeleccionada = piezaEnCasilla;
+                selectedRow = Fila;
+                selectedCol = Columna;
+
+                // ... [Lógica de Resaltado de Movimientos] ...
+                int maxDistanciaMovimiento = piezaSeleccionada.getNombre().equals("HombreLobo") ? 2 : 1;
+                int maxDistanciaAtaque = piezaSeleccionada.getNombre().equals("Necromancer") ? 2 : 1;
+
+                for (int FilaF = 0; FilaF < FILAS; FilaF++) {
+                    for (int ColumnaF = 0; ColumnaF < COLUMNAS; ColumnaF++) {
+
+                        JButton targetButton = botonesTablero[FilaF][ColumnaF];
+                        Pieza destino = estadoTablero[FilaF][ColumnaF];
+
+                        if (destino == null) {
+                            if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaMovimiento)) {
+                                targetButton.setIcon(null);
+                                targetButton.setBackground(HIGHLIGHT_COLOR);
+                            }
+                        } else if (!destino.getColor().equals(jugadorActualColor)) {
+                            if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaAtaque)
+                                    || (piezaSeleccionada.getNombre().equals("Necromancer") && isAdjacentToFriendlyZombie(FilaF, ColumnaF, jugadorActualColor))) {
+                                targetButton.setBorder(BorderFactory.createLineBorder(Color.RED, 3));
+                            }
+                        }
+                    }
+                }
+
+            } else {
+                if (piezaEnCasilla != null && piezaEnCasilla.getColor().equals(jugadorActualColor)) {
+                    JOptionPane.showMessageDialog(this, "Solo puedes mover piezas del tipo: " + piezaDelTurno, "Pieza Incorrecta", JOptionPane.WARNING_MESSAGE);
+                }
+                selectedRow = -1;
+                selectedCol = -1;
+            }
+        } else {
+            // FASE 2: Movimiento o Ataque a Casilla Destino
+            if (Fila == selectedRow && Columna == selectedCol) {
+                accionEjecutada = true;
+            } else {
+                Pieza destino = estadoTablero[Fila][Columna];
+
+                final int distR = Math.abs(selectedRow - Fila);
+                final int distC = Math.abs(selectedCol - Columna);
+                final int distanciaTotal = Math.max(distR, distC);
+
+                int maxDistanciaMovimiento = piezaSeleccionada.getNombre().equals("HombreLobo") ? 2 : 1;
+                int maxDistanciaAtaque = piezaSeleccionada.getNombre().equals("Necromancer") ? 2 : 1;
+                String nombrePieza = piezaSeleccionada.getNombre();
+
+                // Intento de Movimiento o Conjuro (Casilla vacía)
+                if (destino == null) {
+
+                    if (nombrePieza.equals("Necromancer")) {
+                        Necromancer muerte = (Necromancer) piezaSeleccionada;
+                        int choiceIndex = -1;
+
+                        if (distanciaTotal == 1 && isPathValid(selectedRow, selectedCol, Fila, Columna, 1)) {
+                            Object[] options = {"Mover a casilla", "Conjurar Zombie"};
+                            choiceIndex = JOptionPane.showOptionDialog(this, "¿Qué desea hacer con la Necromancer?", "Acción de Necromancer", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                        } else {
+                            Object[] options = {"Conjurar Zombie", "Cancelar"};
+                            int distantChoice = JOptionPane.showOptionDialog(this, "Esta casilla está fuera del rango de movimiento.\n¿Desea Conjurar un Zombie aquí?", "Conjurar a Distancia", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                            if (distantChoice == 0) {
+                                choiceIndex = 1;
+                            } else {
+                                choiceIndex = -1;
+                            }
+                        }
+
+                        if (choiceIndex == 0) {
+                            accionEjecutada = moverPieza(selectedRow, selectedCol, Fila, Columna);
+                        } else if (choiceIndex == 1) {
+                            // Se asume que Necromancer.conjurarZombie actualiza el estadoTablero
+                            muerte.conjurarZombie(this, Fila, Columna);
+                            cambiarTurno(false); // No cambiará el turno
+                            accionEjecutada = true;
+                        }
+
+                    } else if (isPathValid(selectedRow, selectedCol, Fila, Columna, maxDistanciaMovimiento)) {
+                        accionEjecutada = moverPieza(selectedRow, selectedCol, Fila, Columna);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Movimiento no válido para esta pieza o distancia.", "Error de Reglas", JOptionPane.WARNING_MESSAGE);
+                    }
+                } // Intento de Ataque (Casilla ocupada)
+                else {
+                    if (!destino.getColor().equals(piezaSeleccionada.getColor())) {
+
+                        boolean isStandardAttackPossible = isPathValid(selectedRow, selectedCol, Fila, Columna, maxDistanciaAtaque);
+                        boolean isZombieAttackPossible = nombrePieza.equals("Necromancer") && isAdjacentToFriendlyZombie(Fila, Columna, jugadorActualColor);
+
+                        if (isStandardAttackPossible || isZombieAttackPossible) {
+
+                            String ataqueTipo = "0";
+                            boolean isLongRangeZombieAttack = isZombieAttackPossible && !isStandardAttackPossible;
+
+                            if (nombrePieza.equals("Vampiro")) {
+                                Object[] options = {"Ataque Normal", "Ataque Especial"};
+                                int choice = JOptionPane.showOptionDialog(this, "¿Qué ataque desea usar?", "Selección de Ataque", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                                if (choice == 0) {
+                                    ataqueTipo = "1";
+                                } else if (choice == 1) {
+                                    ataqueTipo = "2";
+                                }
+                            } else if (nombrePieza.equals("Necromancer")) {
+                                if (isLongRangeZombieAttack) {
+                                    ataqueTipo = "2";
+                                    JOptionPane.showMessageDialog(this, "El objetivo está fuera de rango. Se forzará el Ataque Zombie (Especial).", "Ataque Zombie a Distancia", JOptionPane.INFORMATION_MESSAGE);
+                                } else {
+                                    Object[] options = {"Ataque Normal", "Ataque Especial (Lanza/Zombie)"};
+                                    int choice = JOptionPane.showOptionDialog(this, "¿Qué ataque desea usar?", "Selección de Ataque", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                                    if (choice == 0) {
+                                        ataqueTipo = "1";
+                                    } else if (choice == 1) {
+                                        ataqueTipo = "2";
+                                    }
+                                }
+                            } else {
+                                ataqueTipo = "1";
+                            }
+
+                            if ("1".equals(ataqueTipo)) {
+                                if (distanciaTotal > 1) {
+                                    JOptionPane.showMessageDialog(this, "Ataque Normal: Solo se puede hacer a piezas adyacentes.", "Error de Rango", JOptionPane.WARNING_MESSAGE);
+                                } else {
+                                    piezaSeleccionada.atacar(destino);
+                                    if (destino.getVida() <= 0) {
+                                        estadoTablero[Fila][Columna] = null;
+                                    }
+                                    cambiarTurno(false);
+                                    accionEjecutada = true;
+                                }
+
+                            } else if ("2".equals(ataqueTipo) && (nombrePieza.equals("Vampiro") || nombrePieza.equals("Necromancer"))) {
+
+                                if (nombrePieza.equals("Necromancer")) {
+                                    accionEjecutada = manejarAtaqueEspecialNecromancer((Necromancer) piezaSeleccionada, destino, Fila, Columna, selectedRow, selectedCol, isLongRangeZombieAttack);
+                                } else {
+                                    ((Vampiro) piezaSeleccionada).ataqueEspecial(destino, Fila, Columna, this);
+                                    accionEjecutada = true;
+                                }
+
+                                if (accionEjecutada && destino.getVida() <= 0) {
+                                    estadoTablero[Fila][Columna] = null;
+                                }
+
+                                if (accionEjecutada) {
+                                    cambiarTurno(false);
+                                }
+
+                            } else if (!"0".equals(ataqueTipo)) {
+                                JOptionPane.showMessageDialog(this, "Ataque cancelado o inválido.", "Ataque Inválido", JOptionPane.WARNING_MESSAGE);
+                            }
+
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Ataque no válido para esta pieza o distancia.", "Error de Reglas", JOptionPane.WARNING_MESSAGE);
+                        }
+
+                    } else if (destino.getColor().equals(piezaSeleccionada.getColor())) {
+                        JOptionPane.showMessageDialog(this, "No puedes atacar a una pieza de tu mismo color.", "Ataque Inválido", JOptionPane.WARNING_MESSAGE);
+                    }
+                }
+            }
+        }
+
+        if (accionEjecutada) {
+            // El movimiento o ataque fue exitoso, finaliza el turno
+            piezaSeleccionada = null;
+            selectedRow = -1;
+            selectedCol = -1;
+            finalizarTurno();
+        } else if (piezaSeleccionada != null) {
+            botonesTablero[selectedRow][selectedCol].setBorder(BorderFactory.createLineBorder(Color.YELLOW, 3));
+        }
+
+        actualizarTableroVisual();
+    }
+
+    // Este método permite que ciertas acciones (como Conjurar) no cambien el turno
+    private void cambiarTurno(boolean forzarCambio) {
+        if (forzarCambio) {
+            jugadorActualColor = jugadorActualColor.equals("Blanco") ? "Negro" : "Blanco";
+            if (turnoLabel != null) {
+                turnoLabel.setText("Turno: " + jugadorActualColor + " | Controles: Ruleta y Mensajes");
+            }
+        }
+    }
+
+    // Sobreescribir moverPieza para no cambiar el turno, ya que se hace en finalizarTurno()
+    private boolean moverPieza(int InicioF, int InicioC, int FilaF, int ColumnaF) {
+        if (estadoTablero[FilaF][ColumnaF] != null) {
+            return false;
+        }
+
+        Pieza pieza = estadoTablero[InicioF][InicioC];
+        estadoTablero[FilaF][ColumnaF] = pieza;
+        estadoTablero[InicioF][InicioC] = null;
+
+        return true;
+    }
+
+    // -----------------------------------------------------------------------
+    // --- MÉTODOS AUXILIARES DE INICIALIZACIÓN Y VISUALIZACIÓN ---
+    // -----------------------------------------------------------------------
     private void inicializarPiezasEnTableroLogico() {
         String[] orden = {"HombreLobo", "Vampiro", "Necromancer", "Necromancer", "Vampiro", "HombreLobo"};
         String colorNegro = "Negro";
         String colorBlanco = "Blanco";
-        
+
         for (int j = 0; j < COLUMNAS; j++) {
-            // Fila 0 para las piezas Negras
             estadoTablero[0][j] = crearNuevaPieza(orden[j], colorNegro);
-            // Última fila para las piezas Blancas
             estadoTablero[FILAS - 1][j] = crearNuevaPieza(orden[j], colorBlanco);
         }
     }
-    
-    
+
     private Pieza crearNuevaPieza(String tipo, String color) {
         switch (tipo) {
             case "HombreLobo":
@@ -155,86 +592,78 @@ public class Tablero extends JFrame implements ActionListener {
                 return null;
         }
     }
-    
-    //Colocar pieza en algun lugar del Tablero
-    public void colocarPieza(Pieza pieza, int r, int c) {
-        if (r >= 0 && r < FILAS && c >= 0 && c < COLUMNAS && estadoTablero[r][c] == null) {
-            estadoTablero[r][c] = pieza;
-        }
-    }
 
-    
     private void cargarIconos() {
-        final int iconSize = 125;    
+        final int iconSize = 125;
+
         try {
-            // Iconos NEGROS
+            // Asegúrate de que las imágenes HombreLobo.jpg, Vampiro.jpg, etc. existen en tu classpath
             iconHombreLoboNegro = crearIconoEscalado("HombreLobo.jpg", iconSize);
             iconVampiroNegro = crearIconoEscalado("Vampiro.jpg", iconSize);
             iconNecromancerNegro = crearIconoEscalado("Nercromancer.jpg", iconSize);
             iconZombieNegro = crearIconoEscalado("Zombie.jpg", iconSize);
-            
-            // Iconos BLANCOS
+
             iconHombreLoboBlanco = crearIconoEscalado("HombreLoboB.jpg", iconSize);
             iconVampiroBlanco = crearIconoEscalado("VampiroB.jpg", iconSize);
             iconNecromancerBlanco = crearIconoEscalado("NecromancerB.jpg", iconSize);
             iconZombieBlanco = crearIconoEscalado("ZombieB.jpg", iconSize);
-            
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error al cargar iconos: " + e.getMessage(), "Error de Iconos", JOptionPane.ERROR_MESSAGE);
+            // Si hay un error, el juego puede funcionar sin iconos, o fallar si son requeridos
+            System.err.println("Advertencia: Fallo al cargar los iconos del tablero. Asegúrate de que los archivos estén en la carpeta /Imagenes/: " + e.getMessage());
         }
     }
 
-    
     private ImageIcon crearIconoEscalado(String path, int size) {
-        String resourcePath = "/Imagenes/" + path;    
-        
+        // Asumiendo que las imágenes del tablero están en la carpeta /Imagenes/
+        String resourcePath = "/Imagenes/" + path;
+
         try {
             URL imageUrl = getClass().getResource(resourcePath);
 
             if (imageUrl == null) {
-                System.err.println("Recurso no encontrado: " + resourcePath);    
-                return null;
+                // Si la ruta no funciona, intenta la raíz del classpath
+                imageUrl = getClass().getResource("/" + path);
             }
-            
-            ImageIcon originalIcon = new ImageIcon(imageUrl);    
-            Image image = originalIcon.getImage();    
+
+            if (imageUrl == null) {
+                throw new RuntimeException("Recurso de imagen no encontrado: " + path);
+            }
+
+            ImageIcon originalIcon = new ImageIcon(imageUrl);
+            Image image = originalIcon.getImage();
             Image scaledImage = image.getScaledInstance(size, size, Image.SCALE_SMOOTH);
-            
+
             return new ImageIcon(scaledImage);
         } catch (Exception e) {
-            throw new RuntimeException("Fallo al crear icono escalado para: " + path, e);
+            throw new RuntimeException("Fallo al crear icono escalado para: " + path + " - " + e.getMessage());
         }
     }
-    
-    
-    //Recorre el tablero actualiza la apariencia de todos los botones    
+
     public void actualizarTableroVisual() {
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
-                JButton boton = botonesTablero[i][j];
                 Pieza pieza = estadoTablero[i][j];
 
                 if (pieza == null) {
-                    boton.setIcon(null);
-                    boton.setText(null);
+                    botonesTablero[i][j].setIcon(null);
+                    botonesTablero[i][j].setText(null);
                 } else {
-                    // Muestra el icono correcto según el tipo de pieza y su color
                     setPiezaVisual(i, j, pieza.getNombre(), pieza.getColor());
                 }
             }
         }
-        
+
         this.revalidate();
         this.repaint();
     }
 
-    /// Asigna el icono al botón basándose en el tipo y color de la pieza.
     private void setPiezaVisual(int fila, int columna, String tipo, String color) {
         JButton boton = botonesTablero[fila][columna];
         ImageIcon icon = null;
-        
+
         boolean esBlanco = color.equals("Blanco");
-        
+
         switch (tipo) {
             case "HombreLobo":
                 icon = esBlanco ? iconHombreLoboBlanco : iconHombreLoboNegro;
@@ -245,20 +674,25 @@ public class Tablero extends JFrame implements ActionListener {
             case "Necromancer":
                 icon = esBlanco ? iconNecromancerBlanco : iconNecromancerNegro;
                 break;
-            case "Zombie":    
-                icon = esBlanco ? iconZombieBlanco : iconZombieNegro;    
+            case "Zombie":
+                icon = esBlanco ? iconZombieBlanco : iconZombieNegro;
                 break;
             default:
-                boton.setIcon(null);    
+                boton.setIcon(null);
                 boton.setText(null);
                 return;
         }
-        
+
         boton.setIcon(icon);
         boton.setText(null);
     }
-    
-    
+
+    public void setPieza(Pieza pieza, int fila, int columna) {
+        if (fila >= 0 && fila < FILAS && columna >= 0 && columna < COLUMNAS) {
+            estadoTablero[fila][columna] = pieza;
+        }
+    }
+
     private void resetBorders() {
         Color colorClaro = new Color(240, 240, 240);
         Color colorOscuro = new Color(50, 50, 50);
@@ -267,409 +701,107 @@ public class Tablero extends JFrame implements ActionListener {
             for (int j = 0; j < COLUMNAS; j++) {
                 JButton boton = botonesTablero[i][j];
                 boton.setBorder(null);
-                
+
                 if ((i + j) % 2 == 0) {
                     boton.setBackground(colorClaro);
                 } else {
                     boton.setBackground(colorOscuro);
                 }
-                
+
                 if (estadoTablero[i][j] == null) {
                     boton.setIcon(null);
                 }
             }
         }
     }
-    
-    //Lógica recursiva para verificar si existe un camino libre de obstáculos
-    
-    private boolean MovimientoValido(int FilaA, int ColumnaA, int FilaF, int ColumnaF, int maxDistancia, int currentDistancia) {
-          if (FilaA == FilaF && ColumnaA == ColumnaF) {
-              return true;
-          }
 
-          if (currentDistancia >= maxDistancia) {
-              return false;
-          }
-        
-        for (int dr = -1; dr <= 1; dr++) {
-            for (int dc = -1; dc <= 1; dc++) {
-                if (dr == 0 && dc == 0) continue;    
-                
-                int nextR = FilaA + dr;
-                int nextC = ColumnaA + dc;
+    // [MovimientoValido y isPathValid - Lógica de Movimiento/Ruta]
+    private boolean MovimientoValido(int FilaA, int ColumnaA, int FilaF, int ColumnaF, int maxDistancia, int drFixed, int dcFixed, int currentDistancia) {
+        if (FilaA == FilaF && ColumnaA == ColumnaF) {
+            return true;
+        }
 
-                if (nextR >= 0 && nextR < FILAS && nextC >= 0 && nextC < COLUMNAS) {
-                    
-                    int diffR = Math.abs(FilaF - nextR);
-                    int diffC = Math.abs(ColumnaF - nextC);
-                    int remainingDist = Math.max(diffR, diffC);
-                    
-                    if (remainingDist <= maxDistancia - (currentDistancia + 1)) {
-                        
-                        if (nextR == FilaF && nextC == ColumnaF) {
-                            // Se encontró el destino
-                            return MovimientoValido(nextR, nextC, FilaF, ColumnaF, maxDistancia, currentDistancia + 1);
-                        }
-                        
-                        if (estadoTablero[nextR][nextC] == null) {
-                            // Si la casilla está vacía, continuar buscando el camino
-                            if (MovimientoValido(nextR, nextC, FilaF, ColumnaF, maxDistancia, currentDistancia + 1)) {
-                                return true;
-                            }
-                        }
-                    }
-                }
+        if (currentDistancia >= maxDistancia) {
+            return false;
+        }
+
+        int nextR = FilaA + drFixed;
+        int nextC = ColumnaA + dcFixed;
+
+        if (nextR >= 0 && nextR < FILAS && nextC >= 0 && nextC < COLUMNAS) {
+
+            if (nextR == FilaF && nextC == ColumnaF) {
+                return true;
+            }
+
+            if (estadoTablero[nextR][nextC] == null) {
+                return MovimientoValido(nextR, nextC, FilaF, ColumnaF, maxDistancia, drFixed, dcFixed, currentDistancia + 1);
             }
         }
+
         return false;
     }
-    
-    //Función principal para validar si el camino es libre y está dentro de la distancia.
-    
+
     private boolean isPathValid(int InicioF, int InicioC, int FilaF, int ColumnaF, int maxDistancia) {
         int distR = Math.abs(InicioF - FilaF);
-        int distC = Math.abs(InicioC - ColumnaF);    
+        int distC = Math.abs(InicioC - ColumnaF);
         int distanciaTotal = Math.max(distR, distC);
-        
+
         if (distanciaTotal == 0 || distanciaTotal > maxDistancia) {
-            return false;    
-        }
-        
-        if (maxDistancia == 1) {
-              return true; // Si solo mueve 1, no necesita validación de camino libre.
+            return false;
         }
 
-        // Para movimientos mayores a 1 , se usa la función recursiva.
-        return MovimientoValido(InicioF, InicioC, FilaF, ColumnaF, maxDistancia, 0);
+        boolean isStraight = (distR == 0) || (distC == 0) || (distR == distC);
+
+        if (!isStraight) {
+            return false;
+        }
+
+        if (maxDistancia == 1 || distanciaTotal == 1) {
+            return true;
+        }
+
+        int drFixed = 0;
+        if (FilaF > InicioF) {
+            drFixed = 1;
+        } else if (FilaF < InicioF) {
+            drFixed = -1;
+        }
+
+        int dcFixed = 0;
+        if (ColumnaF > InicioC) {
+            dcFixed = 1;
+        } else if (ColumnaF < InicioC) {
+            dcFixed = -1;
+        }
+
+        int firstStepR = InicioF + drFixed;
+        int firstStepC = InicioC + dcFixed;
+
+        if (estadoTablero[firstStepR][firstStepC] != null) {
+            return false;
+        }
+
+        return MovimientoValido(firstStepR, firstStepC, FilaF, ColumnaF, maxDistancia, drFixed, dcFixed, 1);
     }
-    
-    
-    //Movimiento de pieza a casilla vacía
-    private boolean moverPieza(int InicioF, int InicioC, int FilaF, int ColumnaF) {
-        if (estadoTablero[FilaF][ColumnaF] != null) {
-              return false; // El destino no está vacío
-        }
-        
-        Pieza pieza = estadoTablero[InicioF][InicioC];
-        estadoTablero[FilaF][ColumnaF] = pieza;
-        estadoTablero[InicioF][InicioC] = null; // Vacía la casilla de origen
 
-        cambiarTurno();
-        return true;
-    }
-    
-    //Cambia el turno
-    private void cambiarTurno() {
-        jugadorActualColor = jugadorActualColor.equals("Blanco") ? "Negro" : "Blanco";
-        if (turnoLabel != null) {
-            turnoLabel.setText("Turno: " + jugadorActualColor + " | Controles: Ruleta y Mensajes");
-        }
-    }
-
-    //Manejo de clicks de los botones del Tablero
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        try {
-            String comando = e.getActionCommand();
-            String[] coordenadas = comando.split(",");
-            int r = Integer.parseInt(coordenadas[0]);
-            int c = Integer.parseInt(coordenadas[1]);
-            
-            ManejoClick(r, c);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Ocurrió un error inesperado al manejar el clic: " + ex.getMessage(), "Error de Juego", JOptionPane.ERROR_MESSAGE);
-            piezaSeleccionada = null;
-            selectedRow = -1;
-            selectedCol = -1;
-            actualizarTableroVisual();    
-        }
-    }
-    
-    
-    //Lógica principal del juego al hacer clic en una casilla.
-    
-    private void ManejoClick(int Fila, int Columna) {
-        
-        resetBorders(); // Limpia resaltados anteriores
-        boolean accionEjecutada = false;
-
-        if (piezaSeleccionada == null) {
-            // FASE 1: Selección de Pieza Propia ---
-            
-            Pieza piezaEnCasilla = estadoTablero[Fila][Columna];
-
-            if (piezaEnCasilla != null && piezaEnCasilla.getColor().equals(jugadorActualColor)) {
-                
-                // Excepción al Zombie Previene la selección directa del Zombie
-                if (piezaEnCasilla.getNombre().equals("Zombie")) {
-                      JOptionPane.showMessageDialog(this, "El Zombie no puede ser movido ni atacado directamente, solo es controlado por el Necromancer.", "Reglas del Zombie", JOptionPane.WARNING_MESSAGE);
-                      return;
-                }
-                
-                piezaSeleccionada = piezaEnCasilla;
-                selectedRow = Fila;
-                selectedCol = Columna;
-                
-                // Determinar el rango de movimiento y ataque para el resaltado
-                int maxDistanciaMovimiento = 1;
-                int maxDistanciaAtaque = 1;
-
-                if (piezaSeleccionada.getNombre().equals("HombreLobo")) {
-                    maxDistanciaMovimiento = 2;    
-                    maxDistanciaAtaque = 1;    
-                } else if (piezaSeleccionada.getNombre().equals("Necromancer")) {
-                    maxDistanciaMovimiento = 1;    
-                    // Para el Necromancer, el resaltado de ataque será hasta 2
-                    maxDistanciaAtaque = 2;    
-                }
-                
-                // Resaltar movimientos y ataques posibles
-                for (int FilaF = 0; FilaF < FILAS; FilaF++) {
-                    for (int ColumnaF = 0; ColumnaF < COLUMNAS; ColumnaF++) {
-                        
-                        JButton targetButton = botonesTablero[FilaF][ColumnaF];
-                        Pieza destino = estadoTablero[FilaF][ColumnaF];
-                        
-                        if (destino == null) {
-                            // Resaltar movimiento a casillas vacías
-                            if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaMovimiento)) {
-                                targetButton.setIcon(null);    
-                                targetButton.setBackground(HIGHLIGHT_COLOR);
-                            }    
-                        }    
-                        else if (!destino.getColor().equals(jugadorActualColor)) {
-                            // Resaltar ataque a piezas enemigas
-                            // Para el Necromancer, también resaltamos si el enemigo está adyacente a un zombie.
-                            if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaAtaque) ||    
-                                (piezaSeleccionada.getNombre().equals("Necromancer") && isAdjacentToFriendlyZombie(FilaF, ColumnaF, jugadorActualColor))) {
-                                targetButton.setBorder(BorderFactory.createLineBorder(Color.RED, 3));
-                            }
-                        }
-                    }
-                }
-                
-            } else {
-                selectedRow = -1;
-                selectedCol = -1;
-            }
-        }    
-        else {
-            //FASE 2: Movimiento o Ataque a Casilla Destino
-            if (Fila == selectedRow && Columna == selectedCol) {
-                // Deselección de la pieza
-                accionEjecutada = true;
-            } else {
-                Pieza destino = estadoTablero[Fila][Columna];
-                
-                final int distR = Math.abs(selectedRow - Fila);
-                final int distC = Math.abs(selectedCol - Columna);
-                final int distanciaTotal = Math.max(distR, distC);
-
-                int maxDistanciaMovimiento = piezaSeleccionada.getNombre().equals("HombreLobo") ? 2 : 1;
-                int maxDistanciaAtaque = piezaSeleccionada.getNombre().equals("Necromancer") ? 2 : 1;
-                String nombrePieza = piezaSeleccionada.getNombre();
-
-                // Si la casilla destino está vacía (Intento de Movimiento o Conjuro)
-                if (destino == null) {
-                    
-                    //Permite Conjurar a cualquier casilla vacía
-                    if (nombrePieza.equals("Necromancer")) {
-                        Necromancer muerte = (Necromancer) piezaSeleccionada;
-                        int choiceIndex = -1; // -1: Cancelar, 0: Mover, 1: Conjurar
-                        
-                        if (distanciaTotal == 1 && isPathValid(selectedRow, selectedCol, Fila, Columna, 1)) {
-                            // Opciones adyacentes: Mover (índice 0) o Conjurar (índice 1)
-                            Object[] options = {"Mover a casilla", "Conjurar Zombie"};
-                            choiceIndex = JOptionPane.showOptionDialog(
-                                this,    
-                                "¿Qué desea hacer con la Necromancer?",    
-                                "Acción de Necromancer",
-                                JOptionPane.YES_NO_OPTION,    
-                                JOptionPane.QUESTION_MESSAGE,    
-                                null,    
-                                options,    
-                                options[0]
-                            );
-                        } else {
-                            // Opciones distantes: Conjurar (índice 0) o Cancelar (índice 1)
-                            Object[] options = {"Conjurar Zombie", "Cancelar"};
-                            int distantChoice = JOptionPane.showOptionDialog(
-                                this,    
-                                "Esta casilla está fuera del rango de movimiento.\n¿Desea Conjurar un Zombie aquí?",    
-                                "Conjurar a Distancia",
-                                JOptionPane.YES_NO_OPTION,    
-                                JOptionPane.QUESTION_MESSAGE,    
-                                null,    
-                                options,    
-                                options[0]
-                            );
-                            
-                            // Mapeo: 0 en diálogo distante es Conjurar (que se comporta como índice 1 en la ejecución)
-                            if (distantChoice == 0) {
-                                choiceIndex = 1;    
-                            } else {
-                                choiceIndex = -1; // Cancelar
-                            }
-                        }
-                        
-                        if (choiceIndex == 0) { // Mover (Opción 1 del input original)
-                            accionEjecutada = moverPieza(selectedRow, selectedCol, Fila, Columna);
-                        } else if (choiceIndex == 1) { // Conjurar (Opción 2 del input original)
-                            muerte.conjurarZombie(this, Fila, Columna);
-                            cambiarTurno();
-                            accionEjecutada = true;
-                        }
-                        
-                    } else if (isPathValid(selectedRow, selectedCol, Fila, Columna, maxDistanciaMovimiento)) {
-                        // Movimiento normal para Hombre Lobo o Vampiro
-                        accionEjecutada = moverPieza(selectedRow, selectedCol, Fila, Columna);
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Movimiento no válido para esta pieza o distancia.", "Error de Reglas", JOptionPane.WARNING_MESSAGE);
-                    }
-                }    
-                // Si la casilla destino está ocupada (Intento de Ataque)
-                else {
-                    if (!destino.getColor().equals(piezaSeleccionada.getColor())) {
-                        
-                        boolean isStandardAttackPossible = isPathValid(selectedRow, selectedCol, Fila, Columna, maxDistanciaAtaque);
-                        boolean isZombieAttackPossible = nombrePieza.equals("Necromancer") && isAdjacentToFriendlyZombie(Fila, Columna, jugadorActualColor);
-                        
-                        if (isStandardAttackPossible || isZombieAttackPossible) {
-                            
-                            String ataqueTipo = "0"; // 0: Cancelar, 1: Normal, 2: Especial
-                            boolean isLongRangeZombieAttack = isZombieAttackPossible && !isStandardAttackPossible;
-                            
-                            if (nombrePieza.equals("Vampiro")) {
-                                Object[] options = {"Ataque Normal (Espada)", "Ataque Especial"};
-                                int choice = JOptionPane.showOptionDialog(
-                                    this,    
-                                    "¿Qué ataque desea usar?",    
-                                    "Selección de Ataque",
-                                    JOptionPane.YES_NO_OPTION,    
-                                    JOptionPane.QUESTION_MESSAGE,    
-                                    null,    
-                                    options,    
-                                    options[0]
-                                );
-                                if (choice == 0) ataqueTipo = "1";
-                                else if (choice == 1) ataqueTipo = "2";
-                            } else if (nombrePieza.equals("Necromancer")) {
-                                if (isLongRangeZombieAttack) {
-                                    //Forzar Ataque Zombie si está fuera de rango 2 pero adyacente a Zombie
-                                    ataqueTipo = "2";
-                                    JOptionPane.showMessageDialog(this, "El objetivo está fuera de rango de Ataque Normal/Lanza. Se forzará el Ataque Zombie (Especial).", "Ataque Zombie a Distancia", JOptionPane.INFORMATION_MESSAGE);
-                                } else {
-                                    Object[] options = {"Ataque Normal (Espada)", "Ataque Especial (Lanza/Zombie)"};
-                                    int choice = JOptionPane.showOptionDialog(
-                                        this,    
-                                        "¿Qué ataque desea usar?",    
-                                        "Selección de Ataque",
-                                        JOptionPane.YES_NO_OPTION,    
-                                        JOptionPane.QUESTION_MESSAGE,    
-                                        null,    
-                                        options,    
-                                        options[0]
-                                    );
-                                    if (choice == 0) ataqueTipo = "1";
-                                    else if (choice == 1) ataqueTipo = "2";
-                                }
-                            } else {
-                                // Caso por defecto para piezas como HombreLobo que solo tienen ataque normal.
-                                ataqueTipo = "1";
-                            }
-                                
-                            if ("1".equals(ataqueTipo)) {
-                                // Ataque Normal: Solo a distancia 1
-                                if (distanciaTotal > 1) {
-                                      JOptionPane.showMessageDialog(this, "Ataque Normal: Solo se puede hacer a piezas adyacentes.", "Error de Rango", JOptionPane.WARNING_MESSAGE);
-                                } else {
-                                    piezaSeleccionada.atacar(destino);
-                                    if (destino.getVida() <= 0) {
-                                        estadoTablero[Fila][Columna] = null;    
-                                    }
-                                    cambiarTurno();
-                                    accionEjecutada = true;
-                                }
-
-                            } else if ("2".equals(ataqueTipo) && (nombrePieza.equals("Vampiro") || nombrePieza.equals("Necromancer"))) {
-                                
-                                if (nombrePieza.equals("Necromancer")) {
-                                    // Pasar la posición del Necromancer para el chequeo de la Lanza.
-                                    accionEjecutada = manejarAtaqueEspecialNecromancer((Necromancer)piezaSeleccionada, destino, Fila, Columna, selectedRow, selectedCol, isLongRangeZombieAttack);
-                                } else {
-                                    // Ataque especial de Vampiro
-                                    piezaSeleccionada.ataqueEspecial(destino, Fila, Columna, this);
-                                    accionEjecutada = true;
-                                }
-                                
-                                if (accionEjecutada && destino.getVida() <= 0) {
-                                    estadoTablero[Fila][Columna] = null;    
-                                }
-
-                                if (accionEjecutada) {
-                                    cambiarTurno();
-                                }
-
-                            } else if (!"0".equals(ataqueTipo)) {
-                                JOptionPane.showMessageDialog(this, "Ataque cancelado o inválido.", "Ataque Inválido", JOptionPane.WARNING_MESSAGE);
-                            }
-                            
-                        } else {
-                            JOptionPane.showMessageDialog(this, "Ataque no válido para esta pieza o distancia.", "Error de Reglas", JOptionPane.WARNING_MESSAGE);
-                        }
-
-                    } else if (destino.getColor().equals(piezaSeleccionada.getColor())) {
-                        JOptionPane.showMessageDialog(this, "No puedes atacar a una pieza de tu mismo color.", "Ataque Inválido", JOptionPane.WARNING_MESSAGE);
-                    } else {
-                        // Pieza fuera de rango
-                        JOptionPane.showMessageDialog(this, "Ataque no válido para esta pieza o distancia.", "Error de Reglas", JOptionPane.WARNING_MESSAGE);
-                    }
-                }
-            }
-        }
-        
-        // Finalización del turno/acción
-        if (accionEjecutada) {
-            piezaSeleccionada = null;
-            selectedRow = -1;
-            selectedCol = -1;
-        } else if (piezaSeleccionada != null) {
-            // Si la pieza sigue seleccionada (acción cancelada/fallida)
-            botonesTablero[selectedRow][selectedCol].setBorder(BorderFactory.createLineBorder(Color.YELLOW, 3));
-        }
-        
-        actualizarTableroVisual();    
-    }
-    
-    
-    //Ataque especiales de Necromancer
-    
     private boolean manejarAtaqueEspecialNecromancer(Necromancer muerte, Pieza destino, int r, int c, int necR, int necC, boolean forzarZombieAttack) {
-        
         String tipoAtaque = "0";
 
         if (forzarZombieAttack) {
-            tipoAtaque = "2"; // Forzar la opción 2 si el Necromancer está atacando a larga distancia via Zombie
+            tipoAtaque = "2";
         } else {
             Object[] options = {"Lanza (Rango 2, ignora escudo)", "Zombie Attack (Adyacente a Zombie, Daño 1)"};
-            int choice = JOptionPane.showOptionDialog(
-                this,    
-                "Seleccione ataque especial de Necromancer:",    
-                "Ataque Especial",
-                JOptionPane.YES_NO_OPTION,    
-                JOptionPane.QUESTION_MESSAGE,    
-                null,    
-                options,    
-                options[0]
-            );
+            int choice = JOptionPane.showOptionDialog(this, "Seleccione ataque especial de Necromancer:", "Ataque Especial", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 
-            if (choice == 0) tipoAtaque = "1"; // Lanza
-            else if (choice == 1) tipoAtaque = "2"; // Zombie Attack
+            if (choice == 0) {
+                tipoAtaque = "1";
+            } else if (choice == 1) {
+                tipoAtaque = "2";
+            }
         }
-        
-        if ("1".equals(tipoAtaque)) {    
-            // Lanza: Rango 2. Requiere camino libre.
+
+        if ("1".equals(tipoAtaque)) {
             int dist = Math.max(Math.abs(necR - r), Math.abs(necC - c));
             if (dist == 2 && isPathValid(necR, necC, r, c, 2)) {
                 muerte.lanzarLanza(destino);
@@ -678,15 +810,14 @@ public class Tablero extends JFrame implements ActionListener {
                 }
                 return true;
             } else {
-                JOptionPane.showMessageDialog(this, "Lanza: Rango debe ser exactamente 2 casillas con camino libre.", "Error de Rango", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Lanza: Rango debe ser exactamente 2 casillas con camino libre en línea recta.", "Error de Rango", JOptionPane.WARNING_MESSAGE);
                 return false;
             }
-        } else if ("2".equals(tipoAtaque)) {    
-            // Ataque Zombie: Revisa que el objetivo esté adyacente a un Zombie amigo
+        } else if ("2".equals(tipoAtaque)) {
             if (isAdjacentToFriendlyZombie(r, c, muerte.getColor())) {
-                
-                muerte.ataqueZombie(destino); // Ejecuta 1 daño
-                
+
+                muerte.ataqueZombie(destino);
+
                 if (destino.getVida() <= 0) {
                     estadoTablero[r][c] = null;
                 }
@@ -698,15 +829,16 @@ public class Tablero extends JFrame implements ActionListener {
         }
         return false;
     }
-    
-    /// Verifica si la casilla (r, c) es adyacente a un Zombie del mismo color.
+
     private boolean isAdjacentToFriendlyZombie(int r, int c, String color) {
         for (int dr = -1; dr <= 1; dr++) {
             for (int dc = -1; dc <= 1; dc++) {
-                if (dr == 0 && dc == 0) continue;    
+                if (dr == 0 && dc == 0) {
+                    continue;
+                }
                 int nextR = r + dr;
                 int nextC = c + dc;
-                
+
                 if (nextR >= 0 && nextR < FILAS && nextC >= 0 && nextC < COLUMNAS) {
                     Pieza p = estadoTablero[nextR][nextC];
                     if (p != null && "Zombie".equals(p.getNombre()) && color.equals(p.getColor())) {
@@ -716,36 +848,5 @@ public class Tablero extends JFrame implements ActionListener {
             }
         }
         return false;
-    }
-    
-    /**
-     * Simula el giro de la ruleta para obtener una pieza existente del jugador actual.
-     * (Función recursiva para reintentar si la pieza no existe, hasta 3 intentos).
-     */
-    private String girarRuleta(int intentosRestantes) {
-        if (intentosRestantes <= 0) {
-            return null; // Falló en encontrar una pieza existente después de los reintentos
-        }
-        
-        String[] tipos = {"HombreLobo", "Vampiro", "Necromancer"};
-        String piezaSeleccionadaRuleta = tipos[(int) (Math.random() * tipos.length)];
-        
-        boolean piezaExiste = false;
-        for (int i = 0; i < FILAS; i++) {
-            for (int j = 0; j < COLUMNAS; j++) {
-                Pieza p = estadoTablero[i][j];
-                if (p != null && jugadorActualColor.equals(p.getColor()) && piezaSeleccionadaRuleta.equals(p.getNombre())) {
-                    piezaExiste = true;
-                    break;
-                }
-            }
-            if (piezaExiste) break;
-        }
-
-        if (piezaExiste) {
-            return piezaSeleccionadaRuleta;
-        } else {
-            return girarRuleta(intentosRestantes - 1);
-        }
     }
 }

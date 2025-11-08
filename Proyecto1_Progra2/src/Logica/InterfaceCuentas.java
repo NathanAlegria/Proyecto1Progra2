@@ -27,6 +27,9 @@ public interface InterfaceCuentas {
     //Eliminar Usuario
     boolean eliminarUsuario(String usuario, char[] contrasena);
 
-    //Lista que almacena usuarios para rankings
+    //Lista que almacena usuarios activos para rankings
     ArrayList<Usuarios> getRankingData();
+
+    // Método para obtener todos los usuarios registrados (activos e inactivos)
+    ArrayList<Usuarios> getUsuariosRegistrados();
 }

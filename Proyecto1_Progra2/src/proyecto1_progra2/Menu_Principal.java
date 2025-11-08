@@ -4,43 +4,56 @@
  */
 package proyecto1_progra2;
 
+import Logica.Usuarios; // <-- Import necesario para resolver el error
 import Logica.InterfaceCuentas;
-import Logica.Usuarios;
-import Logica.Cuentas;
-import javax.swing.*;
-import java.util.ArrayList;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import javax.imageio.ImageIO;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author Nathan
  */
+// Importaciones necesarias para las clases internas (Asumiendo que están en el paquete Logica)
+// import Logica.InterfaceCuentas; 
+// import Logica.Usuarios;
+// import Tablero;
+// import Menu; 
+// Importaciones requeridas para el código, ajusta según tu estructura de paquetes.
 public class Menu_Principal extends JFrame {
 
-    private Image backgroundImage;
-    private Image buttonImage;
-    private Image buttonHoverImage;
-    private JLabel currentUserNameLabel;
-
-    private CardLayout cards;
-    private JPanel cardPanel;
-    private Logica.Usuarios usuarioActual;
+    // ----------------------------
+    // ATRIBUTOS PRINCIPALES
+    // ----------------------------
+    private Logica.Usuarios usuarioActual; // Usuario logueado
     private Logica.InterfaceCuentas sistemaCuentas;
 
     private JPasswordField actualPassField;
     private JPasswordField nuevaPassField;
     private JPasswordField confirmarNuevaPassField;
     private JPasswordField cerrarCuentaPassField;
-    
+
     private JLabel infoUsuario;
     private JLabel infoPuntos;
     private JLabel infoFecha;
     private JLabel infoEstado;
 
+    private CardLayout cards;
+    private JPanel cardPanel;
+    private JLabel currentUserNameLabel;
+
+    private Image backgroundImage;
+    private Image buttonImage;
+    private Image buttonHoverImage;
+
+    // ----------------------------
+    // CLASES INTERNAS
+    // ----------------------------
     private class BackgroundPanel extends JPanel {
 
         @Override
@@ -76,6 +89,7 @@ public class Menu_Principal extends JFrame {
     }
 
     private class ThemedButton extends JButton {
+
         protected boolean isHovered = false;
         private final Font buttonFont = new Font("Serif", Font.BOLD, 18);
 
@@ -112,7 +126,7 @@ public class Menu_Principal extends JFrame {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             Image imgToDraw = isHovered ? buttonHoverImage : buttonImage;
-            
+
             if (imgToDraw != null) {
                 g2.drawImage(imgToDraw, 0, 0, getWidth(), getHeight(), this);
             } else {
@@ -123,7 +137,7 @@ public class Menu_Principal extends JFrame {
                 g2.setColor(new Color(160, 100, 0));
                 g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
             }
-            
+
             if (isHovered) {
                 setForeground(Color.WHITE);
             } else {
@@ -134,15 +148,15 @@ public class Menu_Principal extends JFrame {
             g2.dispose();
         }
     }
-    
+
     private class SubOptionButton extends ThemedButton {
+
         public SubOptionButton(String text) {
             super(text);
             setFont(new Font("Serif", Font.PLAIN, 16));
             setPreferredSize(new Dimension(300, 40));
             setMaximumSize(new Dimension(300, 40));
             setMinimumSize(new Dimension(300, 40));
-            
             setForeground(new Color(200, 200, 200));
         }
 
@@ -151,23 +165,26 @@ public class Menu_Principal extends JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            Color baseColor = new Color(30, 15, 60, 150); 
+            Color baseColor = new Color(30, 15, 60, 150);
             Color hoverColor = new Color(50, 25, 90, 180);
-            
+
             g2.setColor(isHovered ? hoverColor : baseColor);
             g2.fillRect(0, 0, getWidth(), getHeight());
-            
+
             if (isHovered) {
                 setForeground(Color.WHITE);
             } else {
                 setForeground(new Color(200, 200, 200));
             }
-            
+
             super.paintComponent(g2);
             g2.dispose();
         }
     }
 
+    // ----------------------------
+    // CONSTRUCTOR COMPLETO DEL MENÚ PRINCIPAL
+    // ----------------------------
     public Menu_Principal(Logica.InterfaceCuentas sistemaCuentas) {
         this.sistemaCuentas = sistemaCuentas;
 
@@ -190,10 +207,11 @@ public class Menu_Principal extends JFrame {
 
         BackgroundPanel backgroundPanel = new BackgroundPanel();
         backgroundPanel.setLayout(new GridBagLayout());
-        backgroundPanel.setOpaque(true); 
+        backgroundPanel.setOpaque(true);
 
         cardPanel.setOpaque(false);
 
+        // Agregar todos los subpaneles al CardLayout
         cardPanel.add(buildMainMenu(), "MainMenu");
         cardPanel.add(buildMiCuentaSubMenu(), "MiCuentaSubMenu");
         cardPanel.add(buildVerMiInformacionPanel(), "VerInfo");
@@ -201,8 +219,6 @@ public class Menu_Principal extends JFrame {
         cardPanel.add(buildCambiarPassPanel(), "CambiarPass");
         cardPanel.add(buildCerrarCuentaPanel(), "CerrarCuenta");
         cardPanel.add(buildRankingPanel(), "Ranking");
-        
-
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(15, 15, 15, 15);
@@ -210,13 +226,13 @@ public class Menu_Principal extends JFrame {
         gbc.anchor = GridBagConstraints.CENTER;
 
         JLabel titleLabel = new JLabel("Vampire Wargame");
-        titleLabel.setForeground(new Color(255, 215, 0)); 
+        titleLabel.setForeground(new Color(255, 215, 0));
         titleLabel.setFont(new Font("Serif", Font.BOLD, 48));
         gbc.gridy = 0;
         backgroundPanel.add(titleLabel, gbc);
 
         JLabel subTitleLabel = new JLabel("— Lord of Shadows —");
-        subTitleLabel.setForeground(new Color(200, 200, 200)); 
+        subTitleLabel.setForeground(new Color(200, 200, 200));
         subTitleLabel.setFont(new Font("Serif", Font.ITALIC, 20));
         gbc.gridy = 1;
         backgroundPanel.add(subTitleLabel, gbc);
@@ -231,6 +247,9 @@ public class Menu_Principal extends JFrame {
         setContentPane(backgroundPanel);
     }
 
+    // ---------------------------------
+    // MÉTODOS AUXILIARES Y FUNCIONALIDAD
+    // ---------------------------------
     public void iniciarMenu(Logica.Usuarios usuarioLogeado) {
         this.usuarioActual = usuarioLogeado;
         if (currentUserNameLabel != null && usuarioLogeado != null) {
@@ -249,22 +268,16 @@ public class Menu_Principal extends JFrame {
     }
 
     private void returnToLogin() {
-        this.dispose(); 
+        this.dispose();
         SwingUtilities.invokeLater(() -> new Menu().setVisible(true));
     }
-    
-    private  void Juego() {
-        this.dispose();
-            SwingUtilities.invokeLater(() -> new Tablero().setVisible(true));
-    }
-    
+
     private void actualizarInfoUsuario() {
         if (usuarioActual != null) {
-            String estadoStr = usuarioActual.getEstado() ? "Activo" : "Inactivo";
             infoUsuario.setText(usuarioActual.getUsuario());
             infoPuntos.setText(String.valueOf(usuarioActual.getPuntos()));
             infoFecha.setText(usuarioActual.getFechaCreacion());
-            infoEstado.setText(estadoStr);
+            infoEstado.setText(usuarioActual.getEstado() ? "Activo" : "Inactivo");
         } else {
             infoUsuario.setText("N/D");
             infoPuntos.setText("N/D");
@@ -276,7 +289,7 @@ public class Menu_Principal extends JFrame {
     private JPanel buildVerMiInformacionPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(true);
-        panel.setBackground(new Color(0, 0, 0, 150)); 
+        panel.setBackground(new Color(0, 0, 0, 150));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         GridBagConstraints c = new GridBagConstraints();
@@ -306,7 +319,7 @@ public class Menu_Principal extends JFrame {
         y = addInfoRow(panel, c, y, "Puntos Acumulados:", infoPuntos);
         y = addInfoRow(panel, c, y, "Fecha de Creación:", infoFecha);
         y = addInfoRow(panel, c, y, "Estado de la Cuenta:", infoEstado);
-        
+
         c.gridy = y;
         c.gridwidth = 2;
         c.insets = new Insets(30, 15, 8, 15);
@@ -316,7 +329,7 @@ public class Menu_Principal extends JFrame {
 
         return panel;
     }
-    
+
     private int addInfoRow(JPanel panel, GridBagConstraints c, int y, String labelText, JLabel valueLabel) {
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("Serif", Font.BOLD, 16));
@@ -331,7 +344,7 @@ public class Menu_Principal extends JFrame {
         c.gridx = 1;
         c.anchor = GridBagConstraints.EAST;
         panel.add(valueLabel, c);
-        
+
         return y + 1;
     }
 
@@ -355,8 +368,9 @@ public class Menu_Principal extends JFrame {
 
         gbc.gridy = 1;
         JButton jugarBtn = new ThemedButton("JUGAR VAMPIRE WARGAME");
+        // Llama al método que verifica usuarios y selecciona el oponente
         jugarBtn.addActionListener(e -> {
-            Juego();
+            seleccionarOponenteEIniciarJuego();
         });
         gbc.insets = new Insets(20, 10, 10, 10);
         TableroJ.add(jugarBtn, gbc);
@@ -410,9 +424,15 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         JButton cambiarPassBtn = new SubOptionButton("Cambiar Contraseña");
         cambiarPassBtn.addActionListener(e -> {
-            if (actualPassField != null) actualPassField.setText("");
-            if (nuevaPassField != null) nuevaPassField.setText("");
-            if (confirmarNuevaPassField != null) confirmarNuevaPassField.setText("");
+            if (actualPassField != null) {
+                actualPassField.setText("");
+            }
+            if (nuevaPassField != null) {
+                nuevaPassField.setText("");
+            }
+            if (confirmarNuevaPassField != null) {
+                confirmarNuevaPassField.setText("");
+            }
             cards.show(cardPanel, "CambiarPass");
         });
         subPanel.add(cambiarPassBtn, c);
@@ -420,7 +440,9 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         JButton cerrarCuentaBtn = new SubOptionButton("Cerrar mi Cuenta");
         cerrarCuentaBtn.addActionListener(e -> {
-            if (cerrarCuentaPassField != null) cerrarCuentaPassField.setText("");
+            if (cerrarCuentaPassField != null) {
+                cerrarCuentaPassField.setText("");
+            }
             cards.show(cardPanel, "CerrarCuenta");
         });
         subPanel.add(cerrarCuentaBtn, c);
@@ -492,12 +514,12 @@ public class Menu_Principal extends JFrame {
         panel.add(titleLabel, c);
         c.insets = new Insets(10, 10, 10, 10);
         c.gridwidth = 2;
-        
+
         c.gridy++;
         JLabel actualLabel = new JLabel("Contraseña Actual:");
         actualLabel.setForeground(new Color(200, 200, 200));
         panel.add(actualLabel, c);
-        
+
         c.gridy++;
         actualPassField = new JPasswordField(15);
         setTextFieldSize(actualPassField);
@@ -507,7 +529,7 @@ public class Menu_Principal extends JFrame {
         JLabel nuevaLabel = new JLabel("Nueva Contraseña (5 caracteres):");
         nuevaLabel.setForeground(new Color(200, 200, 200));
         panel.add(nuevaLabel, c);
-        
+
         c.gridy++;
         nuevaPassField = new JPasswordField(15);
         setTextFieldSize(nuevaPassField);
@@ -533,13 +555,14 @@ public class Menu_Principal extends JFrame {
 
             if (actual.length == 0 || nueva.length == 0 || confirmar.length == 0) {
                 JOptionPane.showMessageDialog(Menu_Principal.this, "Todos los campos deben ser llenados.", "Faltan Datos", JOptionPane.WARNING_MESSAGE);
+                // Asumo que Logica.Usuarios.limpiarContrasena(char[]) existe
                 Usuarios.limpiarContrasena(actual);
                 Usuarios.limpiarContrasena(nueva);
                 Usuarios.limpiarContrasena(confirmar);
                 return;
             }
 
-            if (!java.util.Arrays.equals(nueva, confirmar)) {
+            if (!Arrays.equals(nueva, confirmar)) {
                 JOptionPane.showMessageDialog(Menu_Principal.this, "La nueva contraseña y su confirmación no coinciden.", "Error", JOptionPane.WARNING_MESSAGE);
                 nuevaPassField.setText("");
                 confirmarNuevaPassField.setText("");
@@ -548,14 +571,14 @@ public class Menu_Principal extends JFrame {
                 Usuarios.limpiarContrasena(confirmar);
                 return;
             }
-            
+
             if (sistemaCuentas.cambiarContrasena(usuarioActual.getUsuario(), actual, nueva)) {
                 actualPassField.setText("");
                 nuevaPassField.setText("");
                 confirmarNuevaPassField.setText("");
                 cards.show(cardPanel, "MiCuentaSubMenu");
-            } 
-            
+            }
+
             Usuarios.limpiarContrasena(actual);
             Usuarios.limpiarContrasena(nueva);
             Usuarios.limpiarContrasena(confirmar);
@@ -622,15 +645,15 @@ public class Menu_Principal extends JFrame {
                 JOptionPane.showMessageDialog(Menu_Principal.this, "Debes ingresar tu contraseña para confirmar.", "Faltan Datos", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             int confirm = JOptionPane.showConfirmDialog(
-                Menu_Principal.this, 
-                "¿Estás seguro de que quieres desactivar permanentemente tu cuenta?", 
-                "Confirmar Cierre de Cuenta", 
-                JOptionPane.YES_NO_OPTION, 
-                JOptionPane.WARNING_MESSAGE
+                    Menu_Principal.this,
+                    "¿Estás seguro de que quieres desactivar permanentemente tu cuenta?",
+                    "Confirmar Cierre de Cuenta",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
             );
-            
+
             if (confirm == JOptionPane.YES_OPTION) {
                 if (sistemaCuentas.eliminarUsuario(usuarioActual.getUsuario(), contrasena)) {
                     cerrarCuentaPassField.setText("");
@@ -659,12 +682,57 @@ public class Menu_Principal extends JFrame {
         return panel;
     }
 
-   private JPanel buildRankingPanel() {
-        ArrayList<Usuarios> rankingData = sistemaCuentas.getRankingData();
-        
-        // MODIFICACIÓN: Uso de Lambda para ordenar los puntos de forma descendente 
+    private void seleccionarOponenteEIniciarJuego() {
+        ArrayList<Logica.Usuarios> todosLosUsuarios = sistemaCuentas.getUsuariosRegistrados();
+        ArrayList<String> oponentesDisponibles = new ArrayList<>();
+
+        for (Logica.Usuarios user : todosLosUsuarios) {
+            if (user.getEstado() && !user.getUsuario().equals(usuarioActual.getUsuario())) {
+                oponentesDisponibles.add(user.getUsuario());
+            }
+        }
+
+        if (oponentesDisponibles.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No hay suficientes usuarios registrados y activos para iniciar una partida.",
+                    "Error de Partida",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        String[] oponentesArray = oponentesDisponibles.toArray(new String[0]);
+
+        String oponenteSeleccionado = (String) JOptionPane.showInputDialog(
+                this,
+                "Seleccione su contrincante (Oponente Negro):",
+                "Selección de Oponente",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                oponentesArray,
+                oponentesArray[0]
+        );
+
+        if (oponenteSeleccionado != null) {
+            Juego(oponenteSeleccionado);
+        }
+    }
+
+    private void Juego(String oponenteNombre) {
+        this.dispose();
+        SwingUtilities.invokeLater(()
+                -> new Tablero(usuarioActual.getUsuario(), oponenteNombre, sistemaCuentas).setVisible(true)
+        );
+    }
+
+    private JPanel buildRankingPanel() {
+        // Asumiendo que Usuarios es visible aquí y que sistemaCuentas.getRankingData() existe
+        ArrayList<Logica.Usuarios> rankingData = sistemaCuentas.getRankingData();
+
+        // Ordena los puntos de forma descendente 
         rankingData.sort((u1, u2) -> Integer.compare(u2.getPuntos(), u1.getPuntos()));
-        
+
         String[] columnNames = {"#", "Jugador", "Puntos"};
         DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
             @Override
@@ -674,14 +742,14 @@ public class Menu_Principal extends JFrame {
         };
 
         int rank = 1;
-        for (Usuarios user : rankingData) {
+        for (Logica.Usuarios user : rankingData) {
             model.addRow(new Object[]{
-                rank++, 
-                user.getUsuario(), 
+                rank++,
+                user.getUsuario(),
                 user.getPuntos()
             });
         }
-        
+
         JTable table = new JTable(model);
         table.setFont(new Font("Serif", Font.PLAIN, 16));
         table.setForeground(Color.WHITE);
@@ -713,13 +781,13 @@ public class Menu_Principal extends JFrame {
         c.fill = GridBagConstraints.BOTH;
         c.weightx = 1.0;
         c.weighty = 0.0;
-        
+
         JLabel titleLabel = new JLabel("RANKING DE JUGADORES");
         titleLabel.setForeground(new Color(255, 215, 0));
         titleLabel.setFont(new Font("Serif", Font.BOLD, 30));
         c.insets = new Insets(0, 0, 20, 0);
         contentPanel.add(titleLabel, c);
-        
+
         c.gridy++;
         c.weighty = 1.0;
         c.fill = GridBagConstraints.BOTH;
@@ -734,6 +802,6 @@ public class Menu_Principal extends JFrame {
         backBtn.addActionListener(e -> cards.show(cardPanel, "ReportesSubMenu"));
         contentPanel.add(backBtn, c);
 
-        return contentPanel;
+        return new RankingBackgroundPanel(contentPanel);
     }
 }

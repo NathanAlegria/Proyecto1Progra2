@@ -85,6 +85,7 @@ public class Cuentas implements InterfaceCuentas {
 
         if (verificarCredenciales(usuario, contrasenaAntigua)) {
             user.setContrasena(contrasenaNueva);
+            JOptionPane.showMessageDialog(null, "Contraseña cambiada exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             return true;
         } else {
             JOptionPane.showMessageDialog(null, "Contraseña actual incorrecta.", "Error de Verificación", JOptionPane.ERROR_MESSAGE);
@@ -103,7 +104,7 @@ public class Cuentas implements InterfaceCuentas {
 
         if (verificarCredenciales(usuario, contrasena)) {
             user.setEstado(false);
-            JOptionPane.showMessageDialog(null, "Cuenta de usuario " + usuario + " eliminada (Inactiva) exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            // La notificación de éxito se movió al Menu_Principal para asegurar el flujo de regreso al Login.
             return true;
         } else {
             JOptionPane.showMessageDialog(null, "Contraseña incorrecta para eliminar la cuenta.", "Error de Verificación", JOptionPane.ERROR_MESSAGE);
@@ -120,5 +121,15 @@ public class Cuentas implements InterfaceCuentas {
             }
         }
         return activos;
+    }
+
+    /**
+     * IMPLEMENTACIÓN DEL MÉTODO FALTANTE.
+     * Devuelve la lista completa de usuarios (activos e inactivos).
+     * @return ArrayList<Usuarios> con todos los usuarios.
+     */
+    @Override
+    public ArrayList<Usuarios> getUsuariosRegistrados() {
+        return listaUsuarios;
     }
 }
