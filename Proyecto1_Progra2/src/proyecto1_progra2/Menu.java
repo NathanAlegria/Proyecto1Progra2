@@ -6,6 +6,7 @@ package proyecto1_progra2;
 
 import Logica.Cuentas;
 import Logica.Usuarios;
+import Logica.InterfaceCuentas;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -17,6 +18,8 @@ import java.util.Arrays;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import Logica.InterfaceCuentas;
+import java.net.URL;
+
 /**
  *
  * @author Nathan
@@ -34,6 +37,19 @@ public class Menu extends JFrame {
     private JPasswordField registerPassField;
     private JPasswordField registerConfPassField;
     private InterfaceCuentas sistemaCuentas;
+    
+
+    // MÉTODO AGREGADO: Permite que la ventana Menu_Principal vuelva a mostrar esta ventana al cerrar sesión.
+    public void showMenu() {
+        this.setVisible(true);
+        // Opcional: limpiar los campos de login al regresar.
+        if (loginUserField != null) {
+            loginUserField.setText("");
+        }
+        if (loginPassField != null) {
+            loginPassField.setText("");
+        }
+    }
 
     private class BackgroundPanel extends JPanel {
 
@@ -50,6 +66,7 @@ public class Menu extends JFrame {
     }
 
     private class SubTitlePanel extends JPanel {
+
         public SubTitlePanel() {
             setOpaque(false);
             setLayout(new GridBagLayout());
@@ -68,6 +85,7 @@ public class Menu extends JFrame {
     }
 
     private class ThemedButton extends JButton {
+
         protected boolean isHovered = false;
         private final Font buttonFont = new Font("Serif", Font.BOLD, 20);
 
@@ -103,7 +121,7 @@ public class Menu extends JFrame {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             Image imgToDraw = isHovered ? buttonHoverImage : buttonImage;
-            
+
             if (imgToDraw != null) {
                 g2.drawImage(imgToDraw, 0, 0, getWidth(), getHeight(), this);
             } else {
@@ -112,7 +130,7 @@ public class Menu extends JFrame {
                 g2.setColor(new Color(160, 100, 0));
                 g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
             }
-            
+
             if (isHovered) {
                 setForeground(Color.WHITE);
             } else {
@@ -133,10 +151,11 @@ public class Menu extends JFrame {
         this.sistemaCuentas = Cuentas.getInstance();
 
         try {
+            // Asegúrate de que las rutas de los recursos sean correctas para tu proyecto
             backgroundImage = ImageIO.read(getClass().getResource("/Imagenes/fondo.jpg"));
             buttonImage = ImageIO.read(getClass().getResource("/Imagenes/botones.jpg"));
-            buttonHoverImage = ImageIO.read(getClass().getResource("/Imagenes/botones.jpg")); 
-            subTitleBackgroundImage = ImageIO.read(getClass().getResource("/Imagenes/subT.jpg"));  
+            buttonHoverImage = ImageIO.read(getClass().getResource("/Imagenes/botones.jpg"));
+            subTitleBackgroundImage = ImageIO.read(getClass().getResource("/Imagenes/subT.jpg"));
 
         } catch (IOException | IllegalArgumentException e) {
             JOptionPane.showMessageDialog(this, "No se pudo cargar la imagen de fondo o botones. Asegúrate de que los archivos estén en el paquete 'Imagenes'.", "Error de Recurso", JOptionPane.ERROR_MESSAGE);
@@ -197,7 +216,7 @@ public class Menu extends JFrame {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         buttonPanel.setOpaque(true);
-        buttonPanel.setBackground(new Color(0, 0, 0, 100)); 
+        buttonPanel.setBackground(new Color(0, 0, 0, 100));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 0, 0));
 
         JButton logInButton = new ThemedButton("Log In");
@@ -245,7 +264,7 @@ public class Menu extends JFrame {
         c.insets = new Insets(0, 0, 20, 0);
         panel.add(titleLabel, c);
         c.insets = new Insets(10, 10, 10, 10);
-        
+
         c.gridy++;
         JLabel userLabel = new JLabel("Usuario:");
         userLabel.setForeground(new Color(200, 200, 200));
@@ -293,7 +312,7 @@ public class Menu extends JFrame {
 
             if (contraIngresada.length == 0) {
                 JOptionPane.showMessageDialog(Menu.this, "Ingresa tu contraseña.", "Faltan datos", JOptionPane.WARNING_MESSAGE);
-                Usuarios.limpiarContrasena(contraIngresada);  
+                Usuarios.limpiarContrasena(contraIngresada);
                 loginPassField.setText("");
                 return;
             }
@@ -302,12 +321,14 @@ public class Menu extends JFrame {
                 JOptionPane.showMessageDialog(Menu.this, "¡Bienvenido, " + usuarioIngresado + "!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 loginUserField.setText("");
                 loginPassField.setText("");
-                
+
                 Menu.this.setVisible(false);
-                
+
                 Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuarioIngresado);
-                Menu_Principal menuPrincipal = new Menu_Principal(sistemaCuentas);
-                menuPrincipal.iniciarMenu(usuarioLogeado);
+
+                // CORRECCIÓN: Usar Menu.this para referenciar explícitamente la instancia de Menu.
+                Menu_Principal mp = new Menu_Principal(sistemaCuentas, Menu.this);
+                mp.iniciarMenu(usuarioLogeado);
             } else {
                 JOptionPane.showMessageDialog(Menu.this, "Usuario o contraseña incorrectos.", "Error de Login", JOptionPane.ERROR_MESSAGE);
                 loginPassField.setText("");
@@ -327,7 +348,7 @@ public class Menu extends JFrame {
         c.gridx = 0;
         c.gridy = 0;
         c.gridwidth = 2;
-        
+
         JLabel titleLabel = new JLabel("CREAR NUEVO JUGADOR");
         titleLabel.setForeground(new Color(255, 215, 0));
         titleLabel.setFont(new Font("Serif", Font.BOLD, 24));
@@ -380,6 +401,8 @@ public class Menu extends JFrame {
         });
         panel.add(backBtn, c);
 
+        final Menu menuReferencia = this;
+
         registerBtn.addActionListener(e -> {
             String usuario = registerUserField.getText().trim();
             char[] contra = registerPassField.getPassword();
@@ -402,16 +425,18 @@ public class Menu extends JFrame {
             }
 
             if (sistemaCuentas.registrarUsuario(usuario, contra)) {
-                
+
                 registerUserField.setText("");
                 registerPassField.setText("");
                 registerConfPassField.setText("");
-                
+
                 Menu.this.setVisible(false);
-                
+
                 Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuario);
-                Menu_Principal menuPrincipal = new Menu_Principal(sistemaCuentas);
-                menuPrincipal.iniciarMenu(usuarioLogeado);
+
+                // CORRECCIÓN: Esta línea ya estaba bien, usando Menu.this.
+                Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia);
+                mp.iniciarMenu(usuarioLogeado);
 
             }
 

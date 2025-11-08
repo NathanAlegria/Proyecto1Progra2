@@ -6,6 +6,7 @@ package Logica;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -20,6 +21,9 @@ public class Usuarios {
     private int puntos;
     private String fechaCreacion;
     private boolean estado;
+    
+    // CAMBIO 1: Lista para guardar los logs de juegos individuales
+    private ArrayList<String> logDeMisJuegos; 
 
     public Usuarios(String usuario, char[] contra) {
         this.usuario = usuario;
@@ -28,6 +32,9 @@ public class Usuarios {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         this.fechaCreacion = sdf.format(new Date());
         this.estado = true;
+        
+        // CAMBIO 2: Inicializar la lista de logs
+        this.logDeMisJuegos = new ArrayList<>(); 
     }
 
     public static void limpiarContrasena(char[] array) {
@@ -56,6 +63,11 @@ public class Usuarios {
     public void setPuntos(int puntos) {
         this.puntos = puntos;
     }
+    
+    // CAMBIO 3: Método para sumar puntos fácilmente
+    public void sumarPuntos(int puntosASumar) {
+        this.puntos += puntosASumar;
+    }
 
     public String getFechaCreacion() {
         return fechaCreacion;
@@ -67,5 +79,15 @@ public class Usuarios {
 
     public void setEstado(boolean estado) {
         this.estado = estado;
+    }
+    
+    // CAMBIO 4: Getter para los logs
+    public ArrayList<String> getLogDeMisJuegos() {
+        return logDeMisJuegos;
+    }
+    
+    // CAMBIO 5: Método para agregar un log
+    public void agregarLog(String log) {
+        this.logDeMisJuegos.add(log);
     }
 }

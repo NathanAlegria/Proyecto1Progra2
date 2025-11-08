@@ -4,7 +4,7 @@
  */
 package proyecto1_progra2;
 
-import Logica.Usuarios; // <-- Import necesario para resolver el error
+import Logica.Usuarios;
 import Logica.InterfaceCuentas;
 import java.awt.*;
 import java.awt.event.*;
@@ -19,12 +19,10 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author Nathan
  */
-// Importaciones necesarias para las clases internas (Asumiendo que están en el paquete Logica)
-// import Logica.InterfaceCuentas; 
-// import Logica.Usuarios;
-// import Tablero;
-// import Menu; 
-// Importaciones requeridas para el código, ajusta según tu estructura de paquetes.
+/**
+ *
+ * @author Nathan
+ */
 public class Menu_Principal extends JFrame {
 
     // ----------------------------
@@ -32,6 +30,7 @@ public class Menu_Principal extends JFrame {
     // ----------------------------
     private Logica.Usuarios usuarioActual; // Usuario logueado
     private Logica.InterfaceCuentas sistemaCuentas;
+    private Menu menuReferencia;
 
     private JPasswordField actualPassField;
     private JPasswordField nuevaPassField;
@@ -185,8 +184,10 @@ public class Menu_Principal extends JFrame {
     // ----------------------------
     // CONSTRUCTOR COMPLETO DEL MENÚ PRINCIPAL
     // ----------------------------
-    public Menu_Principal(Logica.InterfaceCuentas sistemaCuentas) {
+    // CONSTRUCTOR MODIFICADO: Acepta la referencia a la ventana Menu
+    public Menu_Principal(Logica.InterfaceCuentas sistemaCuentas, Menu menuReferencia) {
         this.sistemaCuentas = sistemaCuentas;
+        this.menuReferencia = menuReferencia;
 
         setTitle("🏰 Vampire Wargame 📜");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -267,9 +268,10 @@ public class Menu_Principal extends JFrame {
         field.setMaximumSize(fixedSize);
     }
 
+    // MÉTODO MODIFICADO: Utiliza la referencia guardada para volver a mostrar la ventana Menu.
     private void returnToLogin() {
         this.dispose();
-        SwingUtilities.invokeLater(() -> new Menu().setVisible(true));
+        menuReferencia.showMenu();
     }
 
     private void actualizarInfoUsuario() {
@@ -659,7 +661,7 @@ public class Menu_Principal extends JFrame {
                     cerrarCuentaPassField.setText("");
                     Usuarios.limpiarContrasena(contrasena);
                     JOptionPane.showMessageDialog(Menu_Principal.this, "Tu cuenta ha sido cerrada. Volviendo a la pantalla de Login.", "Cuenta Cerrada", JOptionPane.INFORMATION_MESSAGE);
-                    returnToLogin();
+                    returnToLogin(); // Usa el método modificado
                 } else {
                     cerrarCuentaPassField.setText("");
                     Usuarios.limpiarContrasena(contrasena);
@@ -720,17 +722,17 @@ public class Menu_Principal extends JFrame {
     }
 
     private void Juego(String oponenteNombre) {
-        this.dispose();
-        SwingUtilities.invokeLater(()
-                -> new Tablero(usuarioActual.getUsuario(), oponenteNombre, sistemaCuentas).setVisible(true)
-        );
-    }
+    this.dispose();
+    SwingUtilities.invokeLater(()
+        -> new Tablero(usuarioActual.getUsuario(), oponenteNombre, sistemaCuentas, menuReferencia).setVisible(true)
+    );
+}
 
     private JPanel buildRankingPanel() {
         // Asumiendo que Usuarios es visible aquí y que sistemaCuentas.getRankingData() existe
         ArrayList<Logica.Usuarios> rankingData = sistemaCuentas.getRankingData();
 
-        // Ordena los puntos de forma descendente 
+        // Ordena los puntos de forma descendente
         rankingData.sort((u1, u2) -> Integer.compare(u2.getPuntos(), u1.getPuntos()));
 
         String[] columnNames = {"#", "Jugador", "Puntos"};

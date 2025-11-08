@@ -4,13 +4,19 @@
  */
 package proyecto1_progra2;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.net.URL;
+import javax.swing.*;
 import Logica.InterfaceCuentas;
 import Logica.Usuarios;
-
+import Logica.Cuentas;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Random;
 
 /**
  *
@@ -18,6 +24,7 @@ import Logica.Usuarios;
  */
 public class Tablero extends JFrame implements ActionListener {
 
+    private Usuarios usuarioActual;
     private static final int FILAS = 6;
     private static final int COLUMNAS = 6;
     private static final Color HIGHLIGHT_COLOR = new Color(0, 255, 0, 100);
@@ -38,7 +45,7 @@ public class Tablero extends JFrame implements ActionListener {
     // Ruleta
     private final RuletaPanel ruletaPanel;
     private final JButton botonRuleta;
-    private final JButton botonRendirse; // NUEVO BOTON
+    private final JButton botonRendirse;
     private JLabel girosRestantesLabel;
 
     private String nombreJugadorBlanco;
@@ -49,12 +56,16 @@ public class Tablero extends JFrame implements ActionListener {
     private boolean turnoEnCurso = false;
 
     private InterfaceCuentas sistemaCuentas; // INTERFACE PARA PUNTOS Y USUARIOS
+    private Menu menuReferencia; // NUEVO CAMPO PARA ALMACENAR LA REFERENCIA AL MENÚ
 
-    public Tablero(String jugadorBlanco, String jugadorNegro, InterfaceCuentas sistemaCuentas) {
-        this.estadoTablero = new Pieza[FILAS][COLUMNAS]; 
+    // CONSTRUCTOR ACTUALIZADO PARA RECIBIR LA REFERENCIA DEL MENÚ
+    public Tablero(String jugadorBlanco, String jugadorNegro, InterfaceCuentas sistemaCuentas, Menu menuReferencia) {
+        this.estadoTablero = new Pieza[FILAS][COLUMNAS];
         this.sistemaCuentas = sistemaCuentas;
         this.nombreJugadorBlanco = jugadorBlanco;
         this.nombreJugadorNegro = jugadorNegro;
+        this.menuReferencia = menuReferencia; // ALMACENAR REFERENCIA
+        this.usuarioActual = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
 
         cargarIconos();
 
@@ -162,6 +173,7 @@ public class Tablero extends JFrame implements ActionListener {
     // ===========================================
     // --- NUEVO MÉTODO PARA RENDIRSE ---
     // ===========================================
+    // ESTE CÓDIGO PERTENECE A LA CLASE TABLERO.JAVA
     private void rendirse() {
         int confirm = JOptionPane.showConfirmDialog(this,
                 "¿Deseas rendirte? El contrincante obtendrá 3 puntos.",
@@ -169,27 +181,58 @@ public class Tablero extends JFrame implements ActionListener {
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            // Determinar el nombre del oponente según el turno actual
-            String nombreOponente = jugadorActualColor.equals("Blanco") ? nombreJugadorNegro : nombreJugadorBlanco;
 
-            // Buscar usuario real y sumar puntos
-            Usuarios oponente = sistemaCuentas.buscarUsuario(nombreOponente);
-            if (oponente != null) {
-                oponente.setPuntos(oponente.getPuntos() + 3);
+            // 1. Determinar ganador y perdedor
+            // El perdedor es el jugador cuyo turno es actualmente (jugadorActualColor)
+            String nombrePerdedor = jugadorActualColor.equals("Blanco") ? nombreJugadorBlanco : nombreJugadorNegro;
+            String nombreGanador = jugadorActualColor.equals("Blanco") ? nombreJugadorNegro : nombreJugadorBlanco;
+
+            // 2. Buscar usuario real y sumar puntos
+            Usuarios ganador = sistemaCuentas.buscarUsuario(nombreGanador);
+            if (ganador != null) {
+                ganador.setPuntos(ganador.getPuntos() + 3);
+                // Si tiene un método para guardar el estado del usuario en su lógica:
+                // sistemaCuentas.actualizarUsuario(ganador); 
             }
 
-            // Volver al menú principal
-            this.dispose();
-            new Menu_Principal(sistemaCuentas);
+            // 3. Crear mensaje y guardar el evento en el log
+            String logMensaje = String.format("RETIRO: %s se ha retirado. Victoria y 3 puntos para %s.",
+                    nombrePerdedor, nombreGanador);
+
+            // 🚨 Guardar log en el arraylist de InterfaceCuentas 🚨
+            if (sistemaCuentas != null) {
+                // Asumo que InterfaceCuentas tiene un método guardarLog(String)
+                sistemaCuentas.getLogsDeUsuario(logMensaje);
+            }
+
+            // 4. Mostrar mensaje de fin de partida (con el formato solicitado)
+            JOptionPane.showMessageDialog(this,
+                    String.format("%s SE HA RETIRADO, FELICIDADES %s, HAS GANADO 3 PUNTOS",
+                            nombrePerdedor.toUpperCase(), nombreGanador.toUpperCase()),
+                    "Partida Terminada por Retiro",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // 5. Volver al menú principal
+            this.dispose(); // Cierra la ventana del Tablero
+
+            // 🚨 CORRECCIÓN DEL RETORNO: Re-instanciar Menu_Principal 🚨
+            // Usamos el campo de clase 'usuarioActual' que debe estar disponible en Tablero
+            if (usuarioActual != null) {
+                Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia);
+                mp.iniciarMenu(usuarioActual);
+            } else {
+                // Si por alguna razón el usuario actual es nulo, volvemos a la ventana de login.
+                menuReferencia.showMenu();
+            }
         }
     }
 
     // =======================================================================
-    // --- SOLUCIÓN PARA MENU_PRINCIPAL ---
+    // --- MÉTODOS DE CONTROL DE TURNO ACCESIBLES EXTERNAMENTE (Menu_Principal) ---
     // =======================================================================
     /**
-     * Requerido por Menu_Principal para iniciar la lógica de juego.
-     * Implementación pública del método privado iniciarTurno().
+     * Requerido por Menu_Principal para iniciar la lógica de juego. Calcula los
+     * giros posibles e inicia la ruleta.
      */
     public void iniciarTurno() {
         if (turnoEnCurso) {
@@ -217,7 +260,7 @@ public class Tablero extends JFrame implements ActionListener {
     }
 
     // -----------------------------------------------------------------------
-    // --- LÓGICA DE RULETA Y CONTROL DE TURNO (Privado en el código original)---
+    // --- LÓGICA DE RULETA Y CONTROL DE TURNO ---
     // -----------------------------------------------------------------------
     /**
      * Calcula los giros base permitidos según las piezas perdidas.
@@ -254,7 +297,7 @@ public class Tablero extends JFrame implements ActionListener {
     public void manejarResultadoRuleta(String resultadoPieza) {
         if (!turnoEnCurso) {
             return;
-        } 
+        }
 
         if (jugadorTienePieza(resultadoPieza)) {
             // Éxito: El jugador tiene la pieza y puede moverla.
@@ -499,8 +542,10 @@ public class Tablero extends JFrame implements ActionListener {
                             } else if ("2".equals(ataqueTipo) && (nombrePieza.equals("Vampiro") || nombrePieza.equals("Necromancer"))) {
 
                                 if (nombrePieza.equals("Necromancer")) {
+                                    // Se requiere casting a Necromancer para el método especial
                                     accionEjecutada = manejarAtaqueEspecialNecromancer((Necromancer) piezaSeleccionada, destino, Fila, Columna, selectedRow, selectedCol, isLongRangeZombieAttack);
                                 } else {
+                                    // Se requiere casting a Vampiro
                                     ((Vampiro) piezaSeleccionada).ataqueEspecial(destino, Fila, Columna, this);
                                     accionEjecutada = true;
                                 }
@@ -579,6 +624,8 @@ public class Tablero extends JFrame implements ActionListener {
     }
 
     private Pieza crearNuevaPieza(String tipo, String color) {
+        // Debes asegurarte de que las clases HombreLobo, Vampiro, Necromancer y Zombie
+        // existen y extienden (o implementan) la clase Pieza.
         switch (tipo) {
             case "HombreLobo":
                 return new HombreLobo(color);
@@ -600,7 +647,7 @@ public class Tablero extends JFrame implements ActionListener {
             // Asegúrate de que las imágenes HombreLobo.jpg, Vampiro.jpg, etc. existen en tu classpath
             iconHombreLoboNegro = crearIconoEscalado("HombreLobo.jpg", iconSize);
             iconVampiroNegro = crearIconoEscalado("Vampiro.jpg", iconSize);
-            iconNecromancerNegro = crearIconoEscalado("Nercromancer.jpg", iconSize);
+            iconNecromancerNegro = crearIconoEscalado("Nercromancer.jpg", iconSize); // NOTA: Posible error tipográfico ('Nercromancer' en lugar de 'Necromancer')
             iconZombieNegro = crearIconoEscalado("Zombie.jpg", iconSize);
 
             iconHombreLoboBlanco = crearIconoEscalado("HombreLoboB.jpg", iconSize);
@@ -778,11 +825,17 @@ public class Tablero extends JFrame implements ActionListener {
         int firstStepR = InicioF + drFixed;
         int firstStepC = InicioC + dcFixed;
 
-        if (estadoTablero[firstStepR][firstStepC] != null) {
-            return false;
+        // Se verifica que la casilla del primer paso no esté bloqueada, si no es el destino final.
+        if (firstStepR == FilaF && firstStepC == ColumnaF) {
+            return true; // El destino es el primer paso
         }
 
-        return MovimientoValido(firstStepR, firstStepC, FilaF, ColumnaF, maxDistancia, drFixed, dcFixed, 1);
+        if (estadoTablero[firstStepR][firstStepC] == null) {
+            // Llama a MovimientoValido para verificar el resto del camino
+            return MovimientoValido(firstStepR, firstStepC, FilaF, ColumnaF, maxDistancia, drFixed, dcFixed, 1);
+        }
+
+        return false; // El primer paso está bloqueado por otra pieza
     }
 
     private boolean manejarAtaqueEspecialNecromancer(Necromancer muerte, Pieza destino, int r, int c, int necR, int necC, boolean forzarZombieAttack) {

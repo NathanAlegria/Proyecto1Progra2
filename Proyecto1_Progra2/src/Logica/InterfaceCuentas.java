@@ -12,6 +12,14 @@ import Logica.Usuarios;
  */
 public interface InterfaceCuentas {
     
+    // CAMBIO 1: Nuevo método para manejar el fin de juego (suma puntos y registra logs)
+    void finalizarJuego(String ganador, String perdedor, boolean fueRetiro);
+    
+    // CAMBIO 2: Método para obtener los logs de un usuario (para "Mis ultimos juegos")
+    ArrayList<String> getLogsDeUsuario(String nombreUsuario);
+
+    // ... (El resto de métodos permanece igual)
+    
     //registra usuario
     boolean registrarUsuario(String usuario, char[] contrasena);
 
