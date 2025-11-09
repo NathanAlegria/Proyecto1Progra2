@@ -4,22 +4,29 @@
  */
 package proyecto1_progra2;
 
+
 import Logica.Usuarios;
 import Logica.InterfaceCuentas;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 /**
  *
  * @author Nathan
  */
- 
+
+/**
+ * Clase Menu_Principal corregida — incluye:
+ *  - logs con JTextArea para evitar que se corten los mensajes
+ *  - paso de referencia a Tablero para volver al Menu_Principal al finalizar la partida
+ *  - funciones para iniciar/mostrar el menú con el usuario logueado
+ */
 public class Menu_Principal extends JFrame {
 
     // ----------------------------
@@ -54,8 +61,6 @@ public class Menu_Principal extends JFrame {
     // ----------------------------
     // CLASES INTERNAS
     // ----------------------------
-    
-    // Panel de fondo simple
     private class BackgroundPanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
@@ -69,7 +74,6 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    // Panel de fondo para reportes y rankings
     private class RankingBackgroundPanel extends JPanel {
         public RankingBackgroundPanel(JComponent content) {
             setLayout(new GridBagLayout());
@@ -89,7 +93,6 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    // Botón principal temático
     private class ThemedButton extends JButton {
         protected boolean isHovered = false;
         private final Font buttonFont = new Font("Serif", Font.BOLD, 18);
@@ -150,7 +153,6 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    // Botón de subopción (más pequeño)
     private class SubOptionButton extends ThemedButton {
         public SubOptionButton(String text) {
             super(text);
@@ -251,21 +253,19 @@ public class Menu_Principal extends JFrame {
         backgroundPanel.add(cardPanel, gbc);
 
         setContentPane(backgroundPanel);
-        
-        // 🚩 Lógica que antes estaba en iniciarMenu, ahora simplificada aquí:
-        if (usuarioActual != null) {
-             // Actualiza el JLabel de bienvenida en el MainMenu inmediatamente
+
+        // Actualiza el JLabel de bienvenida en el MainMenu inmediatamente
+        if (usuarioActual != null && currentUserNameLabel != null) {
             currentUserNameLabel.setText("Bienvenido, Jugador " + usuarioActual.getUsuario());
         }
+
+        actualizarInfoUsuario();
         cards.show(cardPanel, "MainMenu");
     }
 
     // ---------------------------------
     // MÉTODOS AUXILIARES Y FUNCIONALIDAD
     // ---------------------------------
-    
-    // El método 'iniciarMenu' ya no es necesario, su lógica se movió al constructor.
-    // Pero se mantiene por si se usa en algún flujo interno de la app (aunque no debería)
     public void iniciarMenu(Logica.Usuarios usuarioLogeado) {
         this.usuarioActual = usuarioLogeado;
         if (currentUserNameLabel != null && usuarioLogeado != null) {
@@ -294,6 +294,9 @@ public class Menu_Principal extends JFrame {
             infoPuntos.setText(String.valueOf(usuarioActual.getPuntos()));
             infoFecha.setText(usuarioActual.getFechaCreacion());
             infoEstado.setText(usuarioActual.getEstado() ? "Activo" : "Inactivo");
+            if (currentUserNameLabel != null) {
+                currentUserNameLabel.setText("Bienvenido, Jugador " + usuarioActual.getUsuario());
+            }
         } else {
             infoUsuario.setText("N/D");
             infoPuntos.setText("N/D");
@@ -305,7 +308,6 @@ public class Menu_Principal extends JFrame {
     // ---------------------------------
     // PANELES DE MENÚ
     // ---------------------------------
-    
     private JPanel buildVerMiInformacionPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(true);
@@ -443,7 +445,6 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         JButton cambiarPassBtn = new SubOptionButton("Cambiar Contraseña");
         cambiarPassBtn.addActionListener(e -> {
-            // Limpia los campos antes de mostrar el panel
             if (actualPassField != null) { actualPassField.setText(""); }
             if (nuevaPassField != null) { nuevaPassField.setText(""); }
             if (confirmarNuevaPassField != null) { confirmarNuevaPassField.setText(""); }
@@ -454,7 +455,6 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         JButton cerrarCuentaBtn = new SubOptionButton("Cerrar mi Cuenta");
         cerrarCuentaBtn.addActionListener(e -> {
-            // Limpia el campo antes de mostrar el panel
             if (cerrarCuentaPassField != null) { cerrarCuentaPassField.setText(""); }
             cards.show(cardPanel, "CerrarCuenta");
         });
@@ -506,11 +506,10 @@ public class Menu_Principal extends JFrame {
 
         return subPanel;
     }
-    
+
     // ---------------------------------
     // PANELES DE CUENTA Y REPORTES
     // ---------------------------------
-    
     private JPanel buildCambiarPassPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(true);
@@ -635,7 +634,7 @@ public class Menu_Principal extends JFrame {
         c.insets = new Insets(10, 10, 10, 10);
 
         c.gridy++;
-        JLabel warningLabel = new JLabel("<html><div style='text-align: center;'>Advertencia: Esta acción es **permanente** y desactivará tu cuenta.<br>Ingresa tu contraseña para confirmar.</div></html>");
+        JLabel warningLabel = new JLabel("<html><div style='text-align: center;'>Advertencia: Esta acción es <b>permanente</b> y desactivará tu cuenta.<br>Ingresa tu contraseña para confirmar.</div></html>");
         warningLabel.setForeground(new Color(255, 100, 100));
         warningLabel.setFont(new Font("Serif", Font.BOLD, 14));
         panel.add(warningLabel, c);
@@ -674,7 +673,7 @@ public class Menu_Principal extends JFrame {
                     cerrarCuentaPassField.setText("");
                     Usuarios.limpiarContrasena(contrasena);
                     JOptionPane.showMessageDialog(Menu_Principal.this, "Tu cuenta ha sido cerrada. Volviendo a la pantalla de Login.", "Cuenta Cerrada", JOptionPane.INFORMATION_MESSAGE);
-                    returnToLogin(); 
+                    returnToLogin();
                 } else {
                     cerrarCuentaPassField.setText("");
                     Usuarios.limpiarContrasena(contrasena);
@@ -699,8 +698,8 @@ public class Menu_Principal extends JFrame {
 
     private JPanel buildLogsJuegosPanel() {
 
+        // Si no hay usuario actual (flujo imposible normalmente) mostramos mensaje de error
         if (this.usuarioActual == null) {
-            // Este caso solo ocurre si el flujo inicial de Login/Registro falla.
             JPanel errorPanel = new JPanel(new BorderLayout());
             errorPanel.setOpaque(false);
             errorPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
@@ -711,7 +710,7 @@ public class Menu_Principal extends JFrame {
             errorPanel.add(errorLabel, BorderLayout.CENTER);
 
             JButton backBtn = new ThemedButton("Volver al Menú Principal");
-            backBtn.addActionListener(e -> returnToLogin()); // Vuelve al Menu de Login/Registro
+            backBtn.addActionListener(e -> returnToLogin());
 
             JPanel buttonPanel = new JPanel();
             buttonPanel.setOpaque(false);
@@ -721,39 +720,29 @@ public class Menu_Principal extends JFrame {
             return new RankingBackgroundPanel(errorPanel);
         }
 
+        // Obtener logs del usuario actual
         ArrayList<String> logsJugador = sistemaCuentas.getLogsPorJugador(usuarioActual.getUsuario());
 
-        String[] columnNames = {"#", "Descripción del Juego"};
-        DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        // Usamos JTextArea para mostrar log completo sin cortes
+        JTextArea areaLogs = new JTextArea();
+        areaLogs.setEditable(false);
+        areaLogs.setLineWrap(true);
+        areaLogs.setWrapStyleWord(true);
+        areaLogs.setFont(new Font("Serif", Font.PLAIN, 14));
+        areaLogs.setBackground(new Color(30, 15, 60, 200));
+        areaLogs.setForeground(Color.WHITE);
 
         if (logsJugador != null && !logsJugador.isEmpty()) {
-            int index = 1;
             for (String log : logsJugador) {
-                model.addRow(new Object[]{index++, log});
+                areaLogs.append(log + "\n\n-------------------------------\n\n");
             }
         } else {
-            model.addRow(new Object[]{"-", "No se encontraron registros de partidas."});
+            areaLogs.append("No se encontraron registros de partidas.");
         }
 
-        JTable table = new JTable(model);
-        table.setFont(new Font("Serif", Font.PLAIN, 16));
-        table.setForeground(Color.WHITE);
-        table.setBackground(new Color(30, 15, 60, 200));
-        table.setRowHeight(30);
-        table.getTableHeader().setFont(new Font("Serif", Font.BOLD, 18));
-        table.getTableHeader().setBackground(new Color(150, 80, 0));
-        table.getTableHeader().setForeground(Color.BLACK);
-        table.setShowGrid(false);
-
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setPreferredSize(new Dimension(450, 400));
+        JScrollPane scrollPane = new JScrollPane(areaLogs);
+        scrollPane.setPreferredSize(new Dimension(650, 500));
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getViewport().setBackground(new Color(30, 15, 60, 200));
 
         JPanel contentPanel = new JPanel(new GridBagLayout());
         contentPanel.setOpaque(true);
@@ -785,7 +774,7 @@ public class Menu_Principal extends JFrame {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(20, 0, 0, 0);
         JButton backBtn = new ThemedButton("Volver al Menú Anterior");
-        backBtn.addActionListener(e -> cards.show(cardPanel, "ReportesSubMenu")); 
+        backBtn.addActionListener(e -> cards.show(cardPanel, "ReportesSubMenu"));
         contentPanel.add(backBtn, c);
 
         return new RankingBackgroundPanel(contentPanel);
@@ -829,11 +818,9 @@ public class Menu_Principal extends JFrame {
     }
 
     private void Juego(String oponenteNombre) {
+        // Al iniciar el Tablero, PASAMOS 'this' para que el Tablero pueda volver al Menu_Principal correcto
         this.dispose();
-        // Asumiendo que 'Tablero' recibe el usuario actual, el nombre del oponente, sistemaCuentas y la referencia del Menu.
-        SwingUtilities.invokeLater(()
-                -> new Tablero(usuarioActual.getUsuario(), oponenteNombre, sistemaCuentas, menuReferencia).setVisible(true)
-        );
+        SwingUtilities.invokeLater(() -> new Tablero(usuarioActual.getUsuario(), oponenteNombre, sistemaCuentas, this).setVisible(true));
     }
 
     private JPanel buildRankingPanel() {

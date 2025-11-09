@@ -4,26 +4,23 @@
  */
 package proyecto1_progra2;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.net.URL;
-import javax.swing.*;
-import Logica.InterfaceCuentas;
 import Logica.Usuarios;
-import Logica.Cuentas;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.util.Random;
+import Logica.InterfaceCuentas;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.net.URL;
 import java.util.ArrayList;
-import javax.imageio.ImageIO;
 
 /**
  *
  * @author Nathan
+ */
+/**
+ * Tablero completo (con cambios solicitados): - constructor recibe la
+ * referencia a Menu_Principal para poder volver a él - logs de eventos
+ * relevantes se guardan en ambos jugadores - panel lateral de piezas eliminadas
+ * ajustado - ruleta/turnos/ataques sin cambios funcionales significativos
  */
 public class Tablero extends JFrame implements ActionListener {
 
@@ -62,24 +59,25 @@ public class Tablero extends JFrame implements ActionListener {
     private boolean turnoEnCurso = false;
 
     private InterfaceCuentas sistemaCuentas;
+    // Referencia a Menu_Principal que inició la partida (para volver al menú principal con el mismo usuario)
+    private Menu_Principal menuPrincipalReferencia;
     private Menu menuReferencia;
 
-    //Piezas Eliminadas
+    // Piezas Eliminadas
     private JPanel piezasNegrasEliminadasPanel;
     private JPanel piezasBlancasEliminadasPanel;
 
     private ArrayList<Image> imagenesNegrasEliminadas = new ArrayList<>();
     private ArrayList<Image> imagenesBlancasEliminadas = new ArrayList<>();
 
-    private static final int PIEZA_ELIMINADA_SIZE = 40;
     private static final int MARGEN_LATERAL = 20;
 
-    public Tablero(String jugadorBlanco, String jugadorNegro, InterfaceCuentas sistemaCuentas, Menu menuReferencia) {
+    public Tablero(String jugadorBlanco, String jugadorNegro, InterfaceCuentas sistemaCuentas, Menu_Principal menuPrincipalReferencia) {
         this.estadoTablero = new Pieza[FILAS][COLUMNAS];
         this.sistemaCuentas = sistemaCuentas;
         this.nombreJugadorBlanco = jugadorBlanco;
         this.nombreJugadorNegro = jugadorNegro;
-        this.menuReferencia = menuReferencia;
+        this.menuPrincipalReferencia = menuPrincipalReferencia;
         this.usuarioActual = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
 
         cargarIconos();
@@ -105,7 +103,7 @@ public class Tablero extends JFrame implements ActionListener {
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
                 JButton boton = new JButton();
-                boton.setOpaque(true); 
+                boton.setOpaque(true);
                 boton.setBorderPainted(false);
                 boton.setBackground((i + j) % 2 == 0 ? colorClaro : colorOscuro);
                 boton.setFont(new Font("Arial", Font.BOLD, 10));
@@ -122,45 +120,33 @@ public class Tablero extends JFrame implements ActionListener {
         // ----------------------------------------------------------------
         JPanel panelLateralIzquierdo = new JPanel();
         panelLateralIzquierdo.setLayout(new BoxLayout(panelLateralIzquierdo, BoxLayout.Y_AXIS));
-
-        // 🚨 AJUSTE DE DIMENSIÓN: Usar un ancho que dé espacio a las piezas (ej: 200px)
         panelLateralIzquierdo.setPreferredSize(new Dimension(200, 0));
-        panelLateralIzquierdo.setMinimumSize(new Dimension(150, 0)); // Añadido por robustez
-
+        panelLateralIzquierdo.setMinimumSize(new Dimension(150, 0));
         panelLateralIzquierdo.setBorder(BorderFactory.createEmptyBorder(MARGEN_LATERAL, MARGEN_LATERAL, MARGEN_LATERAL, MARGEN_LATERAL));
 
-        // Panel Contenedor de las Piezas Negras Eliminadas
         piezasNegrasEliminadasPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        // El ancho debe ser menor que el contenedor (200) y el alto puede ser grande
         piezasNegrasEliminadasPanel.setPreferredSize(new Dimension(180, 2500));
-        piezasNegrasEliminadasPanel.setBorder(BorderFactory.createTitledBorder("Negras Eliminadas")); // Título para la caja
+        piezasNegrasEliminadasPanel.setBorder(BorderFactory.createTitledBorder("Negras Eliminadas"));
 
-        // 🚨 JScrollPane para Piezas Negras Eliminadas
         JScrollPane scrollNegras = new JScrollPane(piezasNegrasEliminadasPanel);
         scrollNegras.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        // Asegurarse de que el ScrollPane ocupa el ancho deseado
         scrollNegras.setMinimumSize(new Dimension(150, 100));
 
-        // Panel Contenedor de las Piezas Blancas Eliminadas
         piezasBlancasEliminadasPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         piezasBlancasEliminadasPanel.setPreferredSize(new Dimension(180, 2500));
-        piezasBlancasEliminadasPanel.setBorder(BorderFactory.createTitledBorder("Blancas Eliminadas")); // Título para la caja
+        piezasBlancasEliminadasPanel.setBorder(BorderFactory.createTitledBorder("Blancas Eliminadas"));
 
-        // 🚨 JScrollPane para Piezas Blancas Eliminadas
         JScrollPane scrollBlancas = new JScrollPane(piezasBlancasEliminadasPanel);
         scrollBlancas.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollBlancas.setMinimumSize(new Dimension(150, 100));
 
-        // JSplitPane para dividir visualmente las dos secciones
         JSplitPane splitEliminadas = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollNegras, scrollBlancas);
         splitEliminadas.setResizeWeight(0.5);
         splitEliminadas.setDividerSize(5);
-
-        // Añadir el JSplitPane al panel lateral
         panelLateralIzquierdo.add(splitEliminadas);
 
         // ----------------------------------------------------------------
-        // FIN: AJUSTE DEL PANEL LATERAL IZQUIERDO
+        // FIN: PANEL LATERAL IZQUIERDO
         // ----------------------------------------------------------------
         // Panel de controles inferior
         JPanel panelControles = new JPanel();
@@ -222,7 +208,7 @@ public class Tablero extends JFrame implements ActionListener {
         add(panelPrincipal, BorderLayout.CENTER);
         add(panelControles, BorderLayout.SOUTH);
         add(panelLateral, BorderLayout.EAST);
-        add(panelLateralIzquierdo, BorderLayout.WEST); // Asegurarse de que el panel lateral izquierdo se añada aquí
+        add(panelLateralIzquierdo, BorderLayout.WEST);
 
         setLocationRelativeTo(null);
         setVisible(true);
@@ -239,7 +225,6 @@ public class Tablero extends JFrame implements ActionListener {
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-
             String nombrePerdedor = jugadorActualColor.equals("Blanco") ? nombreJugadorBlanco : nombreJugadorNegro;
             String nombreGanador = jugadorActualColor.equals("Blanco") ? nombreJugadorNegro : nombreJugadorBlanco;
 
@@ -248,9 +233,10 @@ public class Tablero extends JFrame implements ActionListener {
                     nombrePerdedor, nombreGanador);
 
             if (ganador != null) {
-                ganador.sumarPuntos(3); 
-                ganador.agregarLog(logMensaje);
+                nombrePerdedor = jugadorActualColor.equals("Blanco") ? nombreJugadorBlanco : nombreJugadorNegro;
+                sistemaCuentas.finalizarJuego(nombreGanador, nombrePerdedor, true);
             }
+
             JOptionPane.showMessageDialog(this,
                     String.format("%s SE HA RETIRADO, FELICIDADES %s, HAS GANADO 3 PUNTOS",
                             nombrePerdedor.toUpperCase(), nombreGanador.toUpperCase()),
@@ -258,20 +244,17 @@ public class Tablero extends JFrame implements ActionListener {
                     JOptionPane.INFORMATION_MESSAGE);
 
             this.dispose();
-
             if (menuReferencia != null) {
                 menuReferencia.showMenu();
             }
         }
     }
 
-     private int contarPiezas(String color) {
+    private int contarPiezas(String color) {
         int contador = 0;
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
                 Pieza p = estadoTablero[i][j];
-                // 1) Ignorar casillas vacías.
-                // 2) Ignorar Zombies (no forman parte de la condición de victoria).
                 if (p != null && color.equals(p.getColor()) && !"Zombie".equals(p.getNombre())) {
                     contador++;
                 }
@@ -280,10 +263,11 @@ public class Tablero extends JFrame implements ActionListener {
         return contador;
     }
 
-     public void destruirPieza(Pieza piezaEliminada) {
-        if (piezaEliminada == null) return;
+    public void destruirPieza(Pieza piezaEliminada) {
+        if (piezaEliminada == null) {
+            return;
+        }
 
-        // 1) Intentar localizar la pieza en el tablero lógico y quitarla (previene que contarPiezas la siga contando).
         boolean encontradoYRemovido = false;
         for (int i = 0; i < FILAS && !encontradoYRemovido; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
@@ -295,55 +279,54 @@ public class Tablero extends JFrame implements ActionListener {
             }
         }
 
-        // 2) Actualizar contadores (solo piezas principales) y colecciones de imágenes eliminadas
         if (piezaEliminada.getColor().equals("Blanco") && !piezaEliminada.getNombre().equals("Zombie")) {
             piezasBlancasRestantes = Math.max(0, piezasBlancasRestantes - 1);
         } else if (piezaEliminada.getColor().equals("Negro") && !piezaEliminada.getNombre().equals("Zombie")) {
             piezasNegrasRestantes = Math.max(0, piezasNegrasRestantes - 1);
         }
 
-        // Añadir imagenes de piezas eliminadas (si no es Zombie)
         if (!"Zombie".equals(piezaEliminada.getNombre())) {
             if (piezaEliminada.getColor().equals("Blanco")) {
-                if (piezaEliminada.getImagen() != null) imagenesBlancasEliminadas.add(piezaEliminada.getImagen());
+                if (piezaEliminada.getImagen() != null) {
+                    imagenesBlancasEliminadas.add(piezaEliminada.getImagen());
+                }
             } else if (piezaEliminada.getColor().equals("Negro")) {
-                if (piezaEliminada.getImagen() != null) imagenesNegrasEliminadas.add(piezaEliminada.getImagen());
+                if (piezaEliminada.getImagen() != null) {
+                    imagenesNegrasEliminadas.add(piezaEliminada.getImagen());
+                }
             }
             actualizarPiezasEliminadas();
         }
 
-        // 3) Registrar evento en logs del jugador correspondiente (si existe) y verificar victoria.
-        //    NOTA: Guardar log antes o después no afecta la detección de victoria; aquí añadimos claridad.
-        String msg = String.format("ELIMINACION: %s (%s) fue destruida.", piezaEliminada.getNombre(), piezaEliminada.getColor());
-        Usuarios u = null;
-        if ("Blanco".equals(piezaEliminada.getColor())) {
-            u = sistemaCuentas != null ? sistemaCuentas.buscarUsuario(nombreJugadorBlanco) : null;
-        } else {
-            u = sistemaCuentas != null ? sistemaCuentas.buscarUsuario(nombreJugadorNegro) : null;
+        // Guardar evento en logs de ambos jugadores (garantiza que ambos vean lo sucedido)
+        String msg = String.format("ELIMINACIÓN: %s (%s) fue destruida.", piezaEliminada.getNombre(), piezaEliminada.getColor());
+        Usuarios u1 = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
+        Usuarios u2 = sistemaCuentas.buscarUsuario(nombreJugadorNegro);
+        if (u1 != null) {
+            u1.agregarLog(msg);
         }
-        if (u != null) {
-            u.agregarLog(msg);
+        if (u2 != null) {
+            u2.agregarLog(msg);
         }
 
-        // Finalmente verificar si con esta eliminación hay un ganador.
         verificarVictoria();
     }
 
     private void verificarVictoria() {
-        // 1) Contar solo las piezas principales (sin Zombies)
         int piezasBlancas = contarPiezas("Blanco");
         int piezasNegras = contarPiezas("Negro");
 
         String nombreGanador = null;
         String nombrePerdedor = null;
 
-        // 2) Determinar ganador/empate basados en conteo de piezas principales
         if (piezasBlancas <= 0 && piezasNegras <= 0) {
-            // Empate por eliminación de piezas principales (muy improbable), mostrar mensaje e ir al menú
             JOptionPane.showMessageDialog(this, "Ambos bandos han quedado sin piezas principales. Empate.", "Empate", JOptionPane.INFORMATION_MESSAGE);
             this.dispose();
-            if (menuReferencia != null) {
-                menuReferencia.showMenu();
+            if (menuPrincipalReferencia != null) {
+                Usuarios retorno = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
+                if (retorno != null) {
+                    menuPrincipalReferencia.iniciarMenu(retorno);
+                }
             }
             return;
         } else if (piezasBlancas <= 0) {
@@ -354,15 +337,19 @@ public class Tablero extends JFrame implements ActionListener {
             nombrePerdedor = nombreJugadorNegro;
         }
 
-        // 3) Si hay ganador, finalizar la partida correctamente (puntos, log, mensaje y volver al menú)
         if (nombreGanador != null) {
-            // Sumar puntos y guardar log en el usuario ganador
             Usuarios ganador = sistemaCuentas != null ? sistemaCuentas.buscarUsuario(nombreGanador) : null;
+            Usuarios perdedor = sistemaCuentas != null ? sistemaCuentas.buscarUsuario(nombrePerdedor) : null;
             String logMensaje = String.format("VICTORIA: %s venció a %s por eliminación de piezas principales. Ganó 3 puntos.", nombreGanador, nombrePerdedor);
 
             if (ganador != null) {
                 ganador.sumarPuntos(3);
+            }
+            if (ganador != null) {
                 ganador.agregarLog(logMensaje);
+            }
+            if (perdedor != null) {
+                perdedor.agregarLog("DERROTA: Perdiste contra " + nombreGanador + " por eliminación.");
             }
 
             JOptionPane.showMessageDialog(this,
@@ -373,16 +360,15 @@ public class Tablero extends JFrame implements ActionListener {
 
             this.dispose();
 
-            if (menuReferencia != null) {
-                menuReferencia.showMenu();
+            if (menuPrincipalReferencia != null) {
+                Usuarios retorno = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
+                if (retorno != null) {
+                    menuPrincipalReferencia.iniciarMenu(retorno);
+                }
             }
         }
     }
 
-
-    /**
-     * Redibuja los paneles laterales con las imágenes de las piezas eliminadas.
-     */
     private void actualizarPiezasEliminadas() {
         piezasNegrasEliminadasPanel.removeAll();
         piezasBlancasEliminadasPanel.removeAll();
@@ -409,48 +395,53 @@ public class Tablero extends JFrame implements ActionListener {
 
     private void finalizarPartidaPorVictoria(String nombreGanador, String nombrePerdedor) {
 
-        // 1. Sumar puntos al ganador
         Usuarios ganador = sistemaCuentas.buscarUsuario(nombreGanador);
+        Usuarios perdedor = sistemaCuentas.buscarUsuario(nombrePerdedor);
 
-        // 2. Crear mensaje y guardar el evento en el log
-        String logMensaje = String.format("VICTORIA: %s venció a %s por eliminación. Ganó 3 puntos.",
-                nombreGanador, nombrePerdedor);
+        String logMensaje = String.format("VICTORIA: %s venció a %s por eliminación. Ganó 3 puntos.", nombreGanador, nombrePerdedor);
 
         if (ganador != null) {
-            ganador.sumarPuntos(3); // Sumamos los puntos
-            ganador.agregarLog(logMensaje); // 🔑 GUARDADO DEL LOG EN EL GANADOR
+            ganador.sumarPuntos(3);
+            ganador.agregarLog(logMensaje);
+        }
+        if (perdedor != null) {
+            perdedor.agregarLog("DERROTA: Perdiste contra " + nombreGanador);
         }
 
-        // 3. Mostrar mensaje en pantalla (Requisito: "JUGADOR TAL VENCIO A JUGADOR CUAL, FELICIDADES HAS GANADO 3 PUNTOS")
+        // Guardar el log también en ambos por si requieres duplicarlo
+        Usuarios u1 = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
+        Usuarios u2 = sistemaCuentas.buscarUsuario(nombreJugadorNegro);
+        if (u1 != null) {
+            u1.agregarLog("PARTIDA: " + logMensaje);
+        }
+        if (u2 != null) {
+            u2.agregarLog("PARTIDA: " + logMensaje);
+        }
+
         JOptionPane.showMessageDialog(this,
                 String.format("%s VENCIÓ A %s, FELICIDADES HAS GANADO 3 PUNTOS",
                         nombreGanador.toUpperCase(), nombrePerdedor.toUpperCase()),
                 "¡Victoria!",
                 JOptionPane.INFORMATION_MESSAGE);
 
-        // 4. Cerrar la ventana del juego
         this.dispose();
 
-        // 5. Volver al Menú Principal
-        if (menuReferencia != null) {
-            menuReferencia.showMenu();
+        if (menuPrincipalReferencia != null) {
+            Usuarios retorno = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
+            if (retorno != null) {
+                menuPrincipalReferencia.iniciarMenu(retorno);
+            }
         }
     }
 
     // =======================================================================
     // --- MÉTODOS DE CONTROL DE TURNO ACCESIBLES EXTERNAMENTE (Menu_Principal) ---
     // =======================================================================
-    /**
-     * Requerido por Menu_Principal para iniciar la lógica de juego. Calcula los
-     * giros posibles e inicia la ruleta.
-     */
     public void iniciarTurno() {
         if (turnoEnCurso) {
             return;
         }
 
-        // Calcula el número de giros que el jugador PUEDE hacer (1, 2 o 3)
-        // Se usa -1 porque el primer giro se cuenta al iniciarlo.
         girosRestantes = calcularGirosBase() - 1;
         turnoEnCurso = true;
         piezaDelTurno = null;
@@ -458,32 +449,20 @@ public class Tablero extends JFrame implements ActionListener {
         botonRuleta.setText("DETENER RULETA");
         actualizarEstadoRuleta();
 
-        // 2. Llamada a iniciarGiroDeTurno
         ruletaPanel.iniciarGiroDeTurno();
     }
 
-    /**
-     * Requerido por Menu_Principal para verificar el estado del turno.
-     */
     public boolean isTurnoEnCurso() {
         return turnoEnCurso;
     }
 
-    // -----------------------------------------------------------------------
-    // --- LÓGICA DE RULETA Y CONTROL DE TURNO ---
-    // -----------------------------------------------------------------------
-    /**
-     * Calcula los giros base permitidos según las piezas perdidas.
-     */
     private int calcularGirosBase() {
-        // Asumimos 6 piezas principales iniciales (3 tipos x 2 de cada uno = 6)
         int piezasIniciales = 6;
         int piezasActuales = 0;
 
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
                 Pieza p = estadoTablero[i][j];
-                // Solo cuenta las piezas principales (no Zombies) del jugador actual
                 if (p != null && p.getColor().equals(jugadorActualColor) && !p.getNombre().equals("Zombie")) {
                     piezasActuales++;
                 }
@@ -493,40 +472,33 @@ public class Tablero extends JFrame implements ActionListener {
         int piezasPerdidas = piezasIniciales - piezasActuales;
 
         if (piezasPerdidas >= 4) {
-            return 3; // 4+ piezas perdidas -> 3 giros
+            return 3;
         } else if (piezasPerdidas >= 2) {
-            return 2; // 2 o 3 piezas perdidas -> 2 giros
+            return 2;
         } else {
-            return 1; // 0 o 1 pieza perdida -> 1 giro
+            return 1;
         }
     }
 
-    /**
-     * Maneja el resultado de la ruleta y la lógica de reintento.
-     */
     public void manejarResultadoRuleta(String resultadoPieza) {
         if (!turnoEnCurso) {
             return;
         }
 
         if (jugadorTienePieza(resultadoPieza)) {
-            // Éxito: El jugador tiene la pieza y puede moverla.
             piezaDelTurno = resultadoPieza;
             botonRuleta.setText("Mueve: " + piezaDelTurno);
             JOptionPane.showMessageDialog(this, "¡Puedes mover cualquier pieza: " + piezaDelTurno + "!", "Pieza Seleccionada", JOptionPane.INFORMATION_MESSAGE);
             girosRestantes = 0;
             actualizarEstadoRuleta();
         } else {
-            // Fracaso: El jugador no tiene la pieza seleccionada.
             if (girosRestantes > 0) {
-                // Reintento: Gasta un giro extra.
                 girosRestantes--;
                 JOptionPane.showMessageDialog(this, "No tienes la pieza '" + resultadoPieza + "'. Reintentando... Giros restantes: " + (girosRestantes + 1), "Reintento", JOptionPane.WARNING_MESSAGE);
                 botonRuleta.setText("GIRAR RULETA");
                 actualizarEstadoRuleta();
-                ruletaPanel.iniciarGiroDeTurno(); // Nuevo giro
+                ruletaPanel.iniciarGiroDeTurno();
             } else {
-                // Fracaso total: Pierde el turno.
                 JOptionPane.showMessageDialog(this, "No tienes la pieza '" + resultadoPieza + "'. Giros agotados. Pierdes el turno.", "Turno Perdido", JOptionPane.ERROR_MESSAGE);
                 finalizarTurno();
             }
@@ -547,7 +519,7 @@ public class Tablero extends JFrame implements ActionListener {
 
     public void finalizarTurno() {
         resetBorders();
-        cambiarTurno(true); // Se fuerza el cambio de turno
+        cambiarTurno(true);
         piezaDelTurno = null;
         turnoEnCurso = false;
         girosRestantes = 0;
@@ -559,19 +531,15 @@ public class Tablero extends JFrame implements ActionListener {
     private void actualizarEstadoRuleta() {
         girosRestantesLabel.setText("Giros restantes: " + (girosRestantes + 1));
 
-        // Controla el botón de la ruleta:
         if (ruletaPanel.isGirando()) {
-            botonRuleta.setEnabled(true); // Permite Detener
+            botonRuleta.setEnabled(true);
         } else if (piezaDelTurno != null && turnoEnCurso) {
-            botonRuleta.setEnabled(false); // Esperando el movimiento de pieza, no girar
+            botonRuleta.setEnabled(false);
         } else {
-            botonRuleta.setEnabled(true); // Permite Iniciar el giro o reintentar
+            botonRuleta.setEnabled(true);
         }
     }
 
-    // -----------------------------------------------------------------------
-    // --- MANEJO DE CLIC DE TABLERO Y PIEZA SELECCIONADA ---
-    // -----------------------------------------------------------------------
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
@@ -587,7 +555,6 @@ public class Tablero extends JFrame implements ActionListener {
 
             ManejoClick(r, c);
         } catch (Exception ex) {
-            // Manejo de excepción más robusto
             System.err.println("Error al manejar el clic: " + ex.getMessage());
             JOptionPane.showMessageDialog(this, "Ocurrió un error inesperado al manejar el clic: " + ex.getMessage(), "Error de Juego", JOptionPane.ERROR_MESSAGE);
             piezaSeleccionada = null;
@@ -603,14 +570,12 @@ public class Tablero extends JFrame implements ActionListener {
         boolean accionEjecutada = false;
 
         if (piezaSeleccionada == null) {
-            // FASE 1: Selección de Pieza Propia
 
             Pieza piezaEnCasilla = estadoTablero[Fila][Columna];
 
             if (piezaEnCasilla != null
                     && piezaEnCasilla.getColor().equals(jugadorActualColor)
-                    && piezaEnCasilla.getNombre().equals(piezaDelTurno) // <-- VALIDACIÓN CLAVE
-                    ) {
+                    && piezaEnCasilla.getNombre().equals(piezaDelTurno)) {
                 if (piezaEnCasilla.getNombre().equals("Zombie")) {
                     JOptionPane.showMessageDialog(this, "El Zombie no puede ser movido ni atacado directamente.", "Reglas del Zombie", JOptionPane.WARNING_MESSAGE);
                     return;
@@ -620,7 +585,6 @@ public class Tablero extends JFrame implements ActionListener {
                 selectedRow = Fila;
                 selectedCol = Columna;
 
-                // ... [Lógica de Resaltado de Movimientos] ...
                 int maxDistanciaMovimiento = piezaSeleccionada.getNombre().equals("HombreLobo") ? 2 : 1;
                 int maxDistanciaAtaque = piezaSeleccionada.getNombre().equals("Necromancer") ? 2 : 1;
 
@@ -652,7 +616,6 @@ public class Tablero extends JFrame implements ActionListener {
                 selectedCol = -1;
             }
         } else {
-            // FASE 2: Movimiento o Ataque a Casilla Destino
             if (Fila == selectedRow && Columna == selectedCol) {
                 accionEjecutada = true;
             } else {
@@ -666,7 +629,6 @@ public class Tablero extends JFrame implements ActionListener {
                 int maxDistanciaAtaque = piezaSeleccionada.getNombre().equals("Necromancer") ? 2 : 1;
                 String nombrePieza = piezaSeleccionada.getNombre();
 
-                // Intento de Movimiento o Conjuro (Casilla vacía)
                 if (destino == null) {
 
                     if (nombrePieza.equals("Necromancer")) {
@@ -689,9 +651,8 @@ public class Tablero extends JFrame implements ActionListener {
                         if (choiceIndex == 0) {
                             accionEjecutada = moverPieza(selectedRow, selectedCol, Fila, Columna);
                         } else if (choiceIndex == 1) {
-                            // Se asume que Necromancer.conjurarZombie actualiza el estadoTablero
                             muerte.conjurarZombie(this, Fila, Columna);
-                            cambiarTurno(false); // No cambiará el turno
+                            cambiarTurno(false);
                             accionEjecutada = true;
                         }
 
@@ -700,8 +661,7 @@ public class Tablero extends JFrame implements ActionListener {
                     } else {
                         JOptionPane.showMessageDialog(this, "Movimiento no válido para esta pieza o distancia.", "Error de Reglas", JOptionPane.WARNING_MESSAGE);
                     }
-                } // Intento de Ataque (Casilla ocupada)
-                else {
+                } else {
                     if (!destino.getColor().equals(piezaSeleccionada.getColor())) {
 
                         boolean isStandardAttackPossible = isPathValid(selectedRow, selectedCol, Fila, Columna, maxDistanciaAtaque);
@@ -753,10 +713,8 @@ public class Tablero extends JFrame implements ActionListener {
                             } else if ("2".equals(ataqueTipo) && (nombrePieza.equals("Vampiro") || nombrePieza.equals("Necromancer"))) {
 
                                 if (nombrePieza.equals("Necromancer")) {
-                                    // Se requiere casting a Necromancer para el método especial
                                     accionEjecutada = manejarAtaqueEspecialNecromancer((Necromancer) piezaSeleccionada, destino, Fila, Columna, selectedRow, selectedCol, isLongRangeZombieAttack);
                                 } else {
-                                    // Se requiere casting a Vampiro
                                     ((Vampiro) piezaSeleccionada).ataqueEspecial(destino, Fila, Columna, this);
                                     accionEjecutada = true;
                                 }
@@ -785,7 +743,6 @@ public class Tablero extends JFrame implements ActionListener {
         }
 
         if (accionEjecutada) {
-            // El movimiento o ataque fue exitoso, finaliza el turno
             piezaSeleccionada = null;
             selectedRow = -1;
             selectedCol = -1;
@@ -797,7 +754,6 @@ public class Tablero extends JFrame implements ActionListener {
         actualizarTableroVisual();
     }
 
-    // Este método permite que ciertas acciones (como Conjurar) no cambien el turno
     private void cambiarTurno(boolean forzarCambio) {
         if (forzarCambio) {
             jugadorActualColor = jugadorActualColor.equals("Blanco") ? "Negro" : "Blanco";
@@ -807,7 +763,6 @@ public class Tablero extends JFrame implements ActionListener {
         }
     }
 
-    // Sobreescribir moverPieza para no cambiar el turno, ya que se hace en finalizarTurno()
     private boolean moverPieza(int InicioF, int InicioC, int FilaF, int ColumnaF) {
         if (estadoTablero[FilaF][ColumnaF] != null) {
             return false;
@@ -820,9 +775,6 @@ public class Tablero extends JFrame implements ActionListener {
         return true;
     }
 
-    // -----------------------------------------------------------------------
-    // --- MÉTODOS AUXILIARES DE INICIALIZACIÓN Y VISUALIZACIÓN ---
-    // -----------------------------------------------------------------------
     private void inicializarPiezasEnTableroLogico() {
         String[] orden = {"HombreLobo", "Vampiro", "Necromancer", "Necromancer", "Vampiro", "HombreLobo"};
         String colorNegro = "Negro";
@@ -835,8 +787,6 @@ public class Tablero extends JFrame implements ActionListener {
     }
 
     private Pieza crearNuevaPieza(String tipo, String color) {
-        // Debes asegurarte de que las clases HombreLobo, Vampiro, Necromancer y Zombie
-        // existen y extienden (o implementan) la clase Pieza.
         switch (tipo) {
             case "HombreLobo":
                 return new HombreLobo(color);
@@ -855,10 +805,9 @@ public class Tablero extends JFrame implements ActionListener {
         final int iconSize = 125;
 
         try {
-            // Asegúrate de que las imágenes HombreLobo.jpg, Vampiro.jpg, etc. existen en tu classpath
             iconHombreLoboNegro = crearIconoEscalado("HombreLoboN.jpg", iconSize);
             iconVampiroNegro = crearIconoEscalado("VampiroN.jpg", iconSize);
-            iconNecromancerNegro = crearIconoEscalado("NecromancerN.jpg", iconSize); // NOTA: Posible error tipográfico ('Nercromancer' en lugar de 'Necromancer')
+            iconNecromancerNegro = crearIconoEscalado("NecromancerN.jpg", iconSize);
             iconZombieNegro = crearIconoEscalado("ZombieN.jpg", iconSize);
 
             iconHombreLoboBlanco = crearIconoEscalado("HombreLoboB.jpg", iconSize);
@@ -867,20 +816,17 @@ public class Tablero extends JFrame implements ActionListener {
             iconZombieBlanco = crearIconoEscalado("ZombieB.jpg", iconSize);
 
         } catch (Exception e) {
-            // Si hay un error, el juego puede funcionar sin iconos, o fallar si son requeridos
             System.err.println("Advertencia: Fallo al cargar los iconos del tablero. Asegúrate de que los archivos estén en la carpeta /Imagenes/: " + e.getMessage());
         }
     }
 
     private ImageIcon crearIconoEscalado(String path, int size) {
-        // Asumiendo que las imágenes del tablero están en la carpeta /Imagenes/
         String resourcePath = "/Imagenes/" + path;
 
         try {
             URL imageUrl = getClass().getResource(resourcePath);
 
             if (imageUrl == null) {
-                // Si la ruta no funciona, intenta la raíz del classpath
                 imageUrl = getClass().getResource("/" + path);
             }
 
@@ -973,7 +919,6 @@ public class Tablero extends JFrame implements ActionListener {
         }
     }
 
-    // [MovimientoValido y isPathValid - Lógica de Movimiento/Ruta]
     private boolean MovimientoValido(int FilaA, int ColumnaA, int FilaF, int ColumnaF, int maxDistancia, int drFixed, int dcFixed, int currentDistancia) {
         if (FilaA == FilaF && ColumnaA == ColumnaF) {
             return true;
@@ -1036,17 +981,15 @@ public class Tablero extends JFrame implements ActionListener {
         int firstStepR = InicioF + drFixed;
         int firstStepC = InicioC + dcFixed;
 
-        // Se verifica que la casilla del primer paso no esté bloqueada, si no es el destino final.
         if (firstStepR == FilaF && firstStepC == ColumnaF) {
-            return true; // El destino es el primer paso
+            return true;
         }
 
         if (estadoTablero[firstStepR][firstStepC] == null) {
-            // Llama a MovimientoValido para verificar el resto del camino
             return MovimientoValido(firstStepR, firstStepC, FilaF, ColumnaF, maxDistancia, drFixed, dcFixed, 1);
         }
 
-        return false; // El primer paso está bloqueado por otra pieza
+        return false;
     }
 
     private boolean manejarAtaqueEspecialNecromancer(Necromancer muerte, Pieza destino, int r, int c, int necR, int necC, boolean forzarZombieAttack) {

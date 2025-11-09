@@ -24,6 +24,10 @@ import java.net.URL;
  *
  * @author Nathan
  */
+/**
+ *
+ * @author Nathan
+ */
 public class Menu extends JFrame {
 
     private Image backgroundImage;
@@ -37,7 +41,7 @@ public class Menu extends JFrame {
     private JPasswordField registerPassField;
     private JPasswordField registerConfPassField;
     private InterfaceCuentas sistemaCuentas;
-    
+
     // MÉTODO AGREGADO: Permite que la ventana Menu_Principal vuelva a mostrar esta ventana al cerrar sesión.
     public void showMenu() {
         this.setVisible(true);
@@ -326,12 +330,13 @@ public class Menu extends JFrame {
                 Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuarioIngresado);
 
                 // 🚩 CORRECCIÓN 1: Pasar el usuario al constructor para inicializarlo inmediatamente.
-                Menu_Principal mp = new Menu_Principal(sistemaCuentas, Menu.this, usuarioLogeado); 
+                Menu_Principal mp = new Menu_Principal(sistemaCuentas, Menu.this, usuarioLogeado);
                 mp.setVisible(true); // Solo se necesita mostrar la nueva ventana
             } else {
                 JOptionPane.showMessageDialog(Menu.this, "Usuario o contraseña incorrectos.", "Error de Login", JOptionPane.ERROR_MESSAGE);
                 loginPassField.setText("");
             }
+            Usuarios.limpiarContrasena(contraIngresada);
         });
         return panel;
     }
@@ -401,7 +406,7 @@ public class Menu extends JFrame {
         panel.add(backBtn, c);
 
         final Menu menuReferencia = this;
- 
+
         registerBtn.addActionListener(e -> {
             String usuario = registerUserField.getText().trim();
             char[] contra = registerPassField.getPassword();
@@ -434,7 +439,7 @@ public class Menu extends JFrame {
                 Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuario);
 
                 // 🚩 CORRECCIÓN 2: Pasar el usuario al constructor para inicializarlo inmediatamente.
-                Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia, usuarioLogeado); 
+                Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia, usuarioLogeado);
                 mp.setVisible(true); // Solo se necesita mostrar la nueva ventana
 
             }
