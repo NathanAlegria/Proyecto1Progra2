@@ -10,7 +10,7 @@ import Logica.Usuarios;
  *
  * @author Nathan
  */
-public interface InterfaceCuentas {
+ public interface InterfaceCuentas {
     
     // CAMBIO 1: Nuevo método para manejar el fin de juego (suma puntos y registra logs)
     void finalizarJuego(String ganador, String perdedor, boolean fueRetiro);

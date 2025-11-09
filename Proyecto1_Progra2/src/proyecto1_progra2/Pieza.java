@@ -5,6 +5,9 @@
 package proyecto1_progra2;
 
 import javax.swing.JOptionPane;
+import java.awt.Image;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 /**
  *
@@ -80,10 +83,39 @@ public abstract class Pieza {
     }
 
     public String getColor() {
-        return color;
+        return this.color;
     }
 
     public String getNombre() {
-        return nombre;
+        return this.nombre;
     }
+
+    public Image getImagen() {
+
+        String sufijoColor = getColor().equals("Blanco") ? "B" : "N";
+        String nombreArchivo = getNombre() + sufijoColor + ".jpg";
+
+        // PRUEBA AMBAS RUTAS
+        String[] posiblesRutas = {
+            "/Imagenes/" + nombreArchivo,
+            "/proyecto1_progra2/Imagenes/" + nombreArchivo
+        };
+
+        for (String ruta : posiblesRutas) {
+            try {
+                java.net.URL url = getClass().getResource(ruta);
+                if (url != null) {
+                    System.out.println("✅ Imagen encontrada: " + ruta);
+                    return ImageIO.read(url);
+                } else {
+                    System.out.println("❌ No se encontró: " + ruta);
+                }
+            } catch (Exception e) {
+                System.err.println("⚠ Error cargando " + ruta + ": " + e);
+            }
+        }
+
+        return null;
+    }
+
 }

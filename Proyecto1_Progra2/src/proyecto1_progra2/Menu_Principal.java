@@ -185,7 +185,7 @@ public class Menu_Principal extends JFrame {
     // CONSTRUCTOR COMPLETO DEL MENÚ PRINCIPAL
     // ----------------------------
     // CONSTRUCTOR MODIFICADO: Acepta la referencia a la ventana Menu
-    public Menu_Principal(Logica.InterfaceCuentas sistemaCuentas, Menu menuReferencia) {
+    public Menu_Principal(Logica.InterfaceCuentas sistemaCuentas, proyecto1_progra2.Menu menuReferencia) {
         this.sistemaCuentas = sistemaCuentas;
         this.menuReferencia = menuReferencia;
 
@@ -724,6 +724,7 @@ public class Menu_Principal extends JFrame {
     private void Juego(String oponenteNombre) {
     this.dispose();
     SwingUtilities.invokeLater(()
+        // ✅ CORRECCIÓN FINAL EN Menu_Principal.Juego()
         -> new Tablero(usuarioActual.getUsuario(), oponenteNombre, sistemaCuentas, menuReferencia).setVisible(true)
     );
 }

@@ -16,7 +16,10 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.util.Random;
+import java.util.ArrayList;
+import javax.imageio.ImageIO;
 
 /**
  *
@@ -42,6 +45,9 @@ public class Tablero extends JFrame implements ActionListener {
     private String jugadorActualColor = "Blanco";
     private JLabel turnoLabel;
 
+    private int piezasBlancasRestantes = 0;
+    private int piezasNegrasRestantes = 0;
+
     // Ruleta
     private final RuletaPanel ruletaPanel;
     private final JButton botonRuleta;
@@ -55,16 +61,25 @@ public class Tablero extends JFrame implements ActionListener {
     private int girosRestantes = 0;
     private boolean turnoEnCurso = false;
 
-    private InterfaceCuentas sistemaCuentas; // INTERFACE PARA PUNTOS Y USUARIOS
-    private Menu menuReferencia; // NUEVO CAMPO PARA ALMACENAR LA REFERENCIA AL MENÚ
+    private InterfaceCuentas sistemaCuentas;
+    private Menu menuReferencia;
 
-    // CONSTRUCTOR ACTUALIZADO PARA RECIBIR LA REFERENCIA DEL MENÚ
+    //Piezas Eliminadas
+    private JPanel piezasNegrasEliminadasPanel;
+    private JPanel piezasBlancasEliminadasPanel;
+
+    private ArrayList<Image> imagenesNegrasEliminadas = new ArrayList<>();
+    private ArrayList<Image> imagenesBlancasEliminadas = new ArrayList<>();
+
+    private static final int PIEZA_ELIMINADA_SIZE = 40;
+    private static final int MARGEN_LATERAL = 20;
+
     public Tablero(String jugadorBlanco, String jugadorNegro, InterfaceCuentas sistemaCuentas, Menu menuReferencia) {
         this.estadoTablero = new Pieza[FILAS][COLUMNAS];
         this.sistemaCuentas = sistemaCuentas;
         this.nombreJugadorBlanco = jugadorBlanco;
         this.nombreJugadorNegro = jugadorNegro;
-        this.menuReferencia = menuReferencia; // ALMACENAR REFERENCIA
+        this.menuReferencia = menuReferencia;
         this.usuarioActual = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
 
         cargarIconos();
@@ -72,7 +87,7 @@ public class Tablero extends JFrame implements ActionListener {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int screenHeight = screenSize.height;
         int windowHeight = screenHeight - 50;
-        int windowWidth = windowHeight + 250;
+        int windowWidth = windowHeight + 550;
 
         setTitle("Vampire Wargame - Partida");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -102,18 +117,63 @@ public class Tablero extends JFrame implements ActionListener {
         }
         panelPrincipal.add(panelTablero, BorderLayout.CENTER);
 
+        // ----------------------------------------------------------------
+        // INICIO: AJUSTE DEL PANEL LATERAL IZQUIERDO (Piezas Eliminadas)
+        // ----------------------------------------------------------------
+        JPanel panelLateralIzquierdo = new JPanel();
+        panelLateralIzquierdo.setLayout(new BoxLayout(panelLateralIzquierdo, BoxLayout.Y_AXIS));
+
+        // 🚨 AJUSTE DE DIMENSIÓN: Usar un ancho que dé espacio a las piezas (ej: 200px)
+        panelLateralIzquierdo.setPreferredSize(new Dimension(200, 0));
+        panelLateralIzquierdo.setMinimumSize(new Dimension(150, 0)); // Añadido por robustez
+
+        panelLateralIzquierdo.setBorder(BorderFactory.createEmptyBorder(MARGEN_LATERAL, MARGEN_LATERAL, MARGEN_LATERAL, MARGEN_LATERAL));
+
+        // Panel Contenedor de las Piezas Negras Eliminadas
+        piezasNegrasEliminadasPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        // El ancho debe ser menor que el contenedor (200) y el alto puede ser grande
+        piezasNegrasEliminadasPanel.setPreferredSize(new Dimension(180, 400));
+        piezasNegrasEliminadasPanel.setBorder(BorderFactory.createTitledBorder("Negras Eliminadas")); // Título para la caja
+
+        // 🚨 JScrollPane para Piezas Negras Eliminadas
+        JScrollPane scrollNegras = new JScrollPane(piezasNegrasEliminadasPanel);
+        scrollNegras.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        // Asegurarse de que el ScrollPane ocupa el ancho deseado
+        scrollNegras.setMinimumSize(new Dimension(180, 100));
+
+        // Panel Contenedor de las Piezas Blancas Eliminadas
+        piezasBlancasEliminadasPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        piezasBlancasEliminadasPanel.setPreferredSize(new Dimension(180, 400));
+        piezasBlancasEliminadasPanel.setBorder(BorderFactory.createTitledBorder("Blancas Eliminadas")); // Título para la caja
+
+        // 🚨 JScrollPane para Piezas Blancas Eliminadas
+        JScrollPane scrollBlancas = new JScrollPane(piezasBlancasEliminadasPanel);
+        scrollBlancas.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollBlancas.setMinimumSize(new Dimension(180, 100));
+
+        // JSplitPane para dividir visualmente las dos secciones
+        JSplitPane splitEliminadas = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollNegras, scrollBlancas);
+        splitEliminadas.setResizeWeight(0.5);
+        splitEliminadas.setDividerSize(5);
+
+        // Añadir el JSplitPane al panel lateral
+        panelLateralIzquierdo.add(splitEliminadas);
+
+        // ----------------------------------------------------------------
+        // FIN: AJUSTE DEL PANEL LATERAL IZQUIERDO
+        // ----------------------------------------------------------------
         // Panel de controles inferior
         JPanel panelControles = new JPanel();
-        turnoLabel = new JLabel("Turno: " + jugadorActualColor + " | Controles: Ruleta y Mensajes");
+        turnoLabel = new JLabel("Turno: " + jugadorActualColor);
         panelControles.add(turnoLabel);
 
         // Panel lateral para ruleta y botones
         JPanel panelLateral = new JPanel();
         panelLateral.setLayout(new BoxLayout(panelLateral, BoxLayout.Y_AXIS));
         panelLateral.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        panelLateral.setPreferredSize(new Dimension(250, windowHeight));
+        panelLateral.setPreferredSize(new Dimension(265, windowHeight));
 
-        JLabel ruletaTitulo = new JLabel("Ruleta de Turno");
+        JLabel ruletaTitulo = new JLabel("Ruleta de Piezas");
         ruletaTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         panelLateral.add(ruletaTitulo);
 
@@ -158,9 +218,11 @@ public class Tablero extends JFrame implements ActionListener {
         girosRestantesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panelLateral.add(girosRestantesLabel);
 
+        // Añadir todos los paneles al BorderLayout
         add(panelPrincipal, BorderLayout.CENTER);
         add(panelControles, BorderLayout.SOUTH);
         add(panelLateral, BorderLayout.EAST);
+        add(panelLateralIzquierdo, BorderLayout.WEST); // Asegurarse de que el panel lateral izquierdo se añada aquí
 
         setLocationRelativeTo(null);
         setVisible(true);
@@ -224,6 +286,142 @@ public class Tablero extends JFrame implements ActionListener {
                 // Si por alguna razón el usuario actual es nulo, volvemos a la ventana de login.
                 menuReferencia.showMenu();
             }
+        }
+    }
+
+    // -----------------------------
+// Método auxiliar: cuenta piezas de un color (incluye Zombies)
+// -----------------------------
+    private int contarPiezas(String color) {
+        int contador = 0;
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                Pieza p = estadoTablero[i][j];
+                if (p != null && color.equals(p.getColor())) {
+                    contador++;
+                }
+            }
+        }
+        return contador;
+    }
+
+    public void destruirPieza(Pieza piezaEliminada) {
+
+        if (piezaEliminada.getColor().equals("Blanco") && !piezaEliminada.getNombre().equals("Zombie")) {
+            piezasBlancasRestantes--;
+
+        } else if (piezaEliminada.getColor().equals("Negro") && !piezaEliminada.getNombre().equals("Zombie")) {
+            piezasNegrasRestantes--;
+
+        }
+
+        if (!piezaEliminada.getNombre().equals("Zombie")) {
+
+            if (piezaEliminada.getColor().equals("Blanco")) {
+                imagenesBlancasEliminadas.add(piezaEliminada.getImagen());
+
+            } else if (piezaEliminada.getColor().equals("Negro")) {
+                imagenesNegrasEliminadas.add(piezaEliminada.getImagen());
+            }
+
+            actualizarPiezasEliminadas();
+        }
+
+        verificarVictoria();
+    }
+
+    // -----------------------------
+// Nueva verificarVictoria: usa conteo real en el tablero (incluye Zombies)
+// -----------------------------
+    private void verificarVictoria() {
+        int piezasBlancas = contarPiezas("Blanco");
+        int piezasNegras = contarPiezas("Negro");
+
+        String nombreGanador = null;
+        String nombrePerdedor = null;
+
+        if (piezasBlancas <= 0 && piezasNegras <= 0) {
+            // Caso raro: empate por eliminación total (ambos 0)
+            // Puedes decidir qué hacer; aquí no daremos 3 puntos a nadie.
+            JOptionPane.showMessageDialog(this, "Ambos bandos han quedado sin piezas. Empate.", "Empate", JOptionPane.INFORMATION_MESSAGE);
+            this.dispose();
+            menuReferencia.showMenu();
+            return;
+        } else if (piezasBlancas <= 0) {
+            nombreGanador = nombreJugadorNegro;
+            nombrePerdedor = nombreJugadorBlanco;
+        } else if (piezasNegras <= 0) {
+            nombreGanador = nombreJugadorBlanco;
+            nombrePerdedor = nombreJugadorNegro;
+        }
+
+        if (nombreGanador != null) {
+            finalizarPartidaPorVictoria(nombreGanador, nombrePerdedor);
+        }
+    }
+
+    /**
+     * Redibuja los paneles laterales con las imágenes de las piezas eliminadas.
+     */
+    private void actualizarPiezasEliminadas() {
+        piezasNegrasEliminadasPanel.removeAll();
+        piezasBlancasEliminadasPanel.removeAll();
+
+        for (Image img : imagenesNegrasEliminadas) {
+            if (img != null) {
+                Image scaledImg = img.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                piezasNegrasEliminadasPanel.add(new JLabel(new ImageIcon(scaledImg)));
+            }
+        }
+
+        for (Image img : imagenesBlancasEliminadas) {
+            if (img != null) {
+                Image scaledImg = img.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                piezasBlancasEliminadasPanel.add(new JLabel(new ImageIcon(scaledImg)));
+            }
+        }
+
+        piezasNegrasEliminadasPanel.revalidate();
+        piezasBlancasEliminadasPanel.revalidate();
+        piezasNegrasEliminadasPanel.repaint();
+        piezasBlancasEliminadasPanel.repaint();
+    }
+
+    private void finalizarPartidaPorVictoria(String nombreGanador, String nombrePerdedor) {
+
+        // 1. Sumar puntos al ganador
+        Usuarios ganador = sistemaCuentas.buscarUsuario(nombreGanador);
+        if (ganador != null) {
+            ganador.setPuntos(ganador.getPuntos() + 3);
+            // Guardar el estado actualizado del usuario si es necesario:
+            // sistemaCuentas.actualizarUsuario(ganador); 
+        }
+
+        // 2. Crear mensaje y guardar el evento en el log
+        String logMensaje = String.format("VICTORIA: %s venció a %s. Ganó 3 puntos.",
+                nombreGanador, nombrePerdedor);
+        sistemaCuentas.getLogsDeUsuario(logMensaje);
+
+        // 3. Mostrar mensaje en pantalla (con el formato solicitado)
+        JOptionPane.showMessageDialog(this,
+                String.format("%s VENCIÓ A %s, FELICIDADES HAS GANADO 3 PUNTOS",
+                        nombreGanador.toUpperCase(), nombrePerdedor.toUpperCase()),
+                "¡Victoria!",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        // 4. Cerrar la ventana del juego
+        this.dispose();
+
+        // 5. Volver al Menú Principal
+        // Buscamos el usuario logeado original (que puede ser el ganador o el perdedor)
+        // para restaurar la sesión en Menu_Principal.
+        Usuarios usuarioLogeado = usuarioActual.getUsuario().equals(nombreGanador) ? ganador : sistemaCuentas.buscarUsuario(nombrePerdedor);
+
+        if (usuarioLogeado != null) {
+            Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia);
+            mp.iniciarMenu(usuarioLogeado);
+        } else {
+            menuReferencia.showMenu(); // Fallback al Login
         }
     }
 
@@ -533,6 +731,7 @@ public class Tablero extends JFrame implements ActionListener {
                                 } else {
                                     piezaSeleccionada.atacar(destino);
                                     if (destino.getVida() <= 0) {
+                                        destruirPieza(destino);
                                         estadoTablero[Fila][Columna] = null;
                                     }
                                     cambiarTurno(false);
@@ -645,10 +844,10 @@ public class Tablero extends JFrame implements ActionListener {
 
         try {
             // Asegúrate de que las imágenes HombreLobo.jpg, Vampiro.jpg, etc. existen en tu classpath
-            iconHombreLoboNegro = crearIconoEscalado("HombreLobo.jpg", iconSize);
-            iconVampiroNegro = crearIconoEscalado("Vampiro.jpg", iconSize);
-            iconNecromancerNegro = crearIconoEscalado("Nercromancer.jpg", iconSize); // NOTA: Posible error tipográfico ('Nercromancer' en lugar de 'Necromancer')
-            iconZombieNegro = crearIconoEscalado("Zombie.jpg", iconSize);
+            iconHombreLoboNegro = crearIconoEscalado("HombreLoboN.jpg", iconSize);
+            iconVampiroNegro = crearIconoEscalado("VampiroN.jpg", iconSize);
+            iconNecromancerNegro = crearIconoEscalado("NecromancerN.jpg", iconSize); // NOTA: Posible error tipográfico ('Nercromancer' en lugar de 'Necromancer')
+            iconZombieNegro = crearIconoEscalado("ZombieN.jpg", iconSize);
 
             iconHombreLoboBlanco = crearIconoEscalado("HombreLoboB.jpg", iconSize);
             iconVampiroBlanco = crearIconoEscalado("VampiroB.jpg", iconSize);
@@ -859,6 +1058,7 @@ public class Tablero extends JFrame implements ActionListener {
             if (dist == 2 && isPathValid(necR, necC, r, c, 2)) {
                 muerte.lanzarLanza(destino);
                 if (destino.getVida() <= 0) {
+                    destruirPieza(destino);
                     estadoTablero[r][c] = null;
                 }
                 return true;
@@ -872,6 +1072,7 @@ public class Tablero extends JFrame implements ActionListener {
                 muerte.ataqueZombie(destino);
 
                 if (destino.getVida() <= 0) {
+                    destruirPieza(destino);
                     estadoTablero[r][c] = null;
                 }
                 return true;

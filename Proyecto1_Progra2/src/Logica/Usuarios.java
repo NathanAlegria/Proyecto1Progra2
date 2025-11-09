@@ -13,30 +13,50 @@ import java.util.Date;
  *
  * @author Nathan
  */
-
 public class Usuarios {
-
+ 
     private String usuario;
     private char[] contra;
     private int puntos;
     private String fechaCreacion;
     private boolean estado;
     
-    // CAMBIO 1: Lista para guardar los logs de juegos individuales
     private ArrayList<String> logDeMisJuegos; 
 
-    public Usuarios(String usuario, char[] contra) {
+    // ==========================================================
+    // CONSTRUCTOR 1: Acepta String (Común para Login o Mocks)
+    // ==========================================================
+    public Usuarios(String usuario, String password) {
         this.usuario = usuario;
-        this.contra = Arrays.copyOf(contra, contra.length);
+        // CORRECCIÓN CRÍTICA: Convierte el String a char[] y lo almacena.
+        this.contra = password.toCharArray(); 
+        
         this.puntos = 0;
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         this.fechaCreacion = sdf.format(new Date());
         this.estado = true;
-        
-        // CAMBIO 2: Inicializar la lista de logs
         this.logDeMisJuegos = new ArrayList<>(); 
     }
-
+    
+    // ==========================================================
+    // CONSTRUCTOR 2: Acepta char[] (NECESARIO para evitar NoSuchMethodError)
+    // Se usa cuando la contraseña se pasa directamente desde un JPasswordField.
+    // ==========================================================
+    public Usuarios(String usuario, char[] passwordArray) {
+        this.usuario = usuario;
+        // CORRECCIÓN CRÍTICA: Copia el array de caracteres de forma segura
+        this.contra = Arrays.copyOf(passwordArray, passwordArray.length);
+        
+        this.puntos = 0;
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        this.fechaCreacion = sdf.format(new Date());
+        this.estado = true;
+        this.logDeMisJuegos = new ArrayList<>(); 
+        
+        // OPCIONAL: Limpiar inmediatamente el array temporal pasado (por seguridad)
+        limpiarContrasena(passwordArray);
+    }
+    
     public static void limpiarContrasena(char[] array) {
         if (array != null) {
             Arrays.fill(array, ' ');
@@ -48,12 +68,14 @@ public class Usuarios {
     }
 
     public char[] getContrasena() {
-        return contra;
+        // Devuelve una copia para evitar modificación externa de la contraseña original
+        return Arrays.copyOf(contra, contra.length); 
     }
 
     public void setContrasena(char[] nuevaContrasena) {
         limpiarContrasena(this.contra);
-        this.contra = Arrays.copyOf(nuevaContrasena, nuevaContrasena.length);
+        // Almacena una copia del nuevo array
+        this.contra = Arrays.copyOf(nuevaContrasena, nuevaContrasena.length); 
     }
 
     public int getPuntos() {
@@ -64,7 +86,6 @@ public class Usuarios {
         this.puntos = puntos;
     }
     
-    // CAMBIO 3: Método para sumar puntos fácilmente
     public void sumarPuntos(int puntosASumar) {
         this.puntos += puntosASumar;
     }
@@ -81,12 +102,10 @@ public class Usuarios {
         this.estado = estado;
     }
     
-    // CAMBIO 4: Getter para los logs
     public ArrayList<String> getLogDeMisJuegos() {
         return logDeMisJuegos;
     }
     
-    // CAMBIO 5: Método para agregar un log
     public void agregarLog(String log) {
         this.logDeMisJuegos.add(log);
     }
