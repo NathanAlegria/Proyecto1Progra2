@@ -38,7 +38,6 @@ public class Menu extends JFrame {
     private JPasswordField registerConfPassField;
     private InterfaceCuentas sistemaCuentas;
     
-
     // MÉTODO AGREGADO: Permite que la ventana Menu_Principal vuelva a mostrar esta ventana al cerrar sesión.
     public void showMenu() {
         this.setVisible(true);
@@ -126,7 +125,7 @@ public class Menu extends JFrame {
                 g2.drawImage(imgToDraw, 0, 0, getWidth(), getHeight(), this);
             } else {
                 g2.setColor(isHovered ? new Color(130, 60, 0, 200) : new Color(80, 40, 0, 180));
-                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.fillRect(0, 0, getWidth() - 1, getHeight() - 1);
                 g2.setColor(new Color(160, 100, 0));
                 g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
             }
@@ -326,9 +325,9 @@ public class Menu extends JFrame {
 
                 Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuarioIngresado);
 
-                // CORRECCIÓN: Usar Menu.this para referenciar explícitamente la instancia de Menu.
-                Menu_Principal mp = new Menu_Principal(sistemaCuentas, Menu.this);
-                mp.iniciarMenu(usuarioLogeado);
+                // 🚩 CORRECCIÓN 1: Pasar el usuario al constructor para inicializarlo inmediatamente.
+                Menu_Principal mp = new Menu_Principal(sistemaCuentas, Menu.this, usuarioLogeado); 
+                mp.setVisible(true); // Solo se necesita mostrar la nueva ventana
             } else {
                 JOptionPane.showMessageDialog(Menu.this, "Usuario o contraseña incorrectos.", "Error de Login", JOptionPane.ERROR_MESSAGE);
                 loginPassField.setText("");
@@ -402,7 +401,7 @@ public class Menu extends JFrame {
         panel.add(backBtn, c);
 
         final Menu menuReferencia = this;
-
+ 
         registerBtn.addActionListener(e -> {
             String usuario = registerUserField.getText().trim();
             char[] contra = registerPassField.getPassword();
@@ -434,9 +433,9 @@ public class Menu extends JFrame {
 
                 Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuario);
 
-                // CORRECCIÓN: Esta línea ya estaba bien, usando Menu.this.
-                Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia);
-                mp.iniciarMenu(usuarioLogeado);
+                // 🚩 CORRECCIÓN 2: Pasar el usuario al constructor para inicializarlo inmediatamente.
+                Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia, usuarioLogeado); 
+                mp.setVisible(true); // Solo se necesita mostrar la nueva ventana
 
             }
 

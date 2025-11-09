@@ -210,4 +210,16 @@ public class Cuentas implements InterfaceCuentas {
     public ArrayList<Usuarios> getUsuariosRegistrados() {
         return listaUsuarios;
     }
+    
+    @Override
+    public ArrayList<String> getLogsPorJugador(String nombreJugador) {
+        ArrayList<String> logs = new ArrayList<>();
+        for (Usuarios u : listaUsuarios) {
+            if (u.getUsuario().equals(nombreJugador)) {
+                logs.addAll(u.getLogDeMisJuegos());
+                break;
+            }
+        }
+        return logs;
+    }
 }

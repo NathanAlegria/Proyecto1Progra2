@@ -105,13 +105,10 @@ public abstract class Pieza {
             try {
                 java.net.URL url = getClass().getResource(ruta);
                 if (url != null) {
-                    System.out.println("✅ Imagen encontrada: " + ruta);
                     return ImageIO.read(url);
-                } else {
-                    System.out.println("❌ No se encontró: " + ruta);
                 }
             } catch (Exception e) {
-                System.err.println("⚠ Error cargando " + ruta + ": " + e);
+                
             }
         }
 

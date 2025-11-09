@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package Logica;
+
 import java.util.ArrayList;
 import Logica.Usuarios;
 
@@ -10,16 +11,15 @@ import Logica.Usuarios;
  *
  * @author Nathan
  */
- public interface InterfaceCuentas {
-    
+public interface InterfaceCuentas {
+
     // CAMBIO 1: Nuevo método para manejar el fin de juego (suma puntos y registra logs)
     void finalizarJuego(String ganador, String perdedor, boolean fueRetiro);
-    
+
     // CAMBIO 2: Método para obtener los logs de un usuario (para "Mis ultimos juegos")
     ArrayList<String> getLogsDeUsuario(String nombreUsuario);
 
     // ... (El resto de métodos permanece igual)
-    
     //registra usuario
     boolean registrarUsuario(String usuario, char[] contrasena);
 
@@ -29,7 +29,7 @@ import Logica.Usuarios;
     //busca usuario por su nombre
     Usuarios buscarUsuario(String usuario);
 
-   //Cambir contra
+    //Cambir contra
     boolean cambiarContrasena(String usuario, char[] contrasenaAntigua, char[] contrasenaNueva);
 
     //Eliminar Usuario
@@ -40,4 +40,7 @@ import Logica.Usuarios;
 
     // Método para obtener todos los usuarios registrados (activos e inactivos)
     ArrayList<Usuarios> getUsuariosRegistrados();
+
+    ArrayList<String> getLogsPorJugador(String nombreJugador);
+
 }

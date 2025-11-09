@@ -105,7 +105,7 @@ public class Tablero extends JFrame implements ActionListener {
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
                 JButton boton = new JButton();
-                boton.setOpaque(true);
+                boton.setOpaque(true); 
                 boton.setBorderPainted(false);
                 boton.setBackground((i + j) % 2 == 0 ? colorClaro : colorOscuro);
                 boton.setFont(new Font("Arial", Font.BOLD, 10));
@@ -132,24 +132,24 @@ public class Tablero extends JFrame implements ActionListener {
         // Panel Contenedor de las Piezas Negras Eliminadas
         piezasNegrasEliminadasPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         // El ancho debe ser menor que el contenedor (200) y el alto puede ser grande
-        piezasNegrasEliminadasPanel.setPreferredSize(new Dimension(180, 400));
+        piezasNegrasEliminadasPanel.setPreferredSize(new Dimension(180, 2500));
         piezasNegrasEliminadasPanel.setBorder(BorderFactory.createTitledBorder("Negras Eliminadas")); // Título para la caja
 
         // 🚨 JScrollPane para Piezas Negras Eliminadas
         JScrollPane scrollNegras = new JScrollPane(piezasNegrasEliminadasPanel);
         scrollNegras.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         // Asegurarse de que el ScrollPane ocupa el ancho deseado
-        scrollNegras.setMinimumSize(new Dimension(180, 100));
+        scrollNegras.setMinimumSize(new Dimension(150, 100));
 
         // Panel Contenedor de las Piezas Blancas Eliminadas
         piezasBlancasEliminadasPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        piezasBlancasEliminadasPanel.setPreferredSize(new Dimension(180, 400));
+        piezasBlancasEliminadasPanel.setPreferredSize(new Dimension(180, 2500));
         piezasBlancasEliminadasPanel.setBorder(BorderFactory.createTitledBorder("Blancas Eliminadas")); // Título para la caja
 
         // 🚨 JScrollPane para Piezas Blancas Eliminadas
         JScrollPane scrollBlancas = new JScrollPane(piezasBlancasEliminadasPanel);
         scrollBlancas.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollBlancas.setMinimumSize(new Dimension(180, 100));
+        scrollBlancas.setMinimumSize(new Dimension(150, 100));
 
         // JSplitPane para dividir visualmente las dos secciones
         JSplitPane splitEliminadas = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollNegras, scrollBlancas);
@@ -232,10 +232,6 @@ public class Tablero extends JFrame implements ActionListener {
         actualizarEstadoRuleta();
     }
 
-    // ===========================================
-    // --- NUEVO MÉTODO PARA RENDIRSE ---
-    // ===========================================
-    // ESTE CÓDIGO PERTENECE A LA CLASE TABLERO.JAVA
     private void rendirse() {
         int confirm = JOptionPane.showConfirmDialog(this,
                 "¿Deseas rendirte? El contrincante obtendrá 3 puntos.",
@@ -244,60 +240,39 @@ public class Tablero extends JFrame implements ActionListener {
 
         if (confirm == JOptionPane.YES_OPTION) {
 
-            // 1. Determinar ganador y perdedor
-            // El perdedor es el jugador cuyo turno es actualmente (jugadorActualColor)
             String nombrePerdedor = jugadorActualColor.equals("Blanco") ? nombreJugadorBlanco : nombreJugadorNegro;
             String nombreGanador = jugadorActualColor.equals("Blanco") ? nombreJugadorNegro : nombreJugadorBlanco;
 
-            // 2. Buscar usuario real y sumar puntos
             Usuarios ganador = sistemaCuentas.buscarUsuario(nombreGanador);
-            if (ganador != null) {
-                ganador.setPuntos(ganador.getPuntos() + 3);
-                // Si tiene un método para guardar el estado del usuario en su lógica:
-                // sistemaCuentas.actualizarUsuario(ganador); 
-            }
-
-            // 3. Crear mensaje y guardar el evento en el log
             String logMensaje = String.format("RETIRO: %s se ha retirado. Victoria y 3 puntos para %s.",
                     nombrePerdedor, nombreGanador);
 
-            // 🚨 Guardar log en el arraylist de InterfaceCuentas 🚨
-            if (sistemaCuentas != null) {
-                // Asumo que InterfaceCuentas tiene un método guardarLog(String)
-                sistemaCuentas.getLogsDeUsuario(logMensaje);
+            if (ganador != null) {
+                ganador.sumarPuntos(3); 
+                ganador.agregarLog(logMensaje);
             }
-
-            // 4. Mostrar mensaje de fin de partida (con el formato solicitado)
             JOptionPane.showMessageDialog(this,
                     String.format("%s SE HA RETIRADO, FELICIDADES %s, HAS GANADO 3 PUNTOS",
                             nombrePerdedor.toUpperCase(), nombreGanador.toUpperCase()),
                     "Partida Terminada por Retiro",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            // 5. Volver al menú principal
-            this.dispose(); // Cierra la ventana del Tablero
+            this.dispose();
 
-            // 🚨 CORRECCIÓN DEL RETORNO: Re-instanciar Menu_Principal 🚨
-            // Usamos el campo de clase 'usuarioActual' que debe estar disponible en Tablero
-            if (usuarioActual != null) {
-                Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia);
-                mp.iniciarMenu(usuarioActual);
-            } else {
-                // Si por alguna razón el usuario actual es nulo, volvemos a la ventana de login.
+            if (menuReferencia != null) {
                 menuReferencia.showMenu();
             }
         }
     }
 
-    // -----------------------------
-// Método auxiliar: cuenta piezas de un color (incluye Zombies)
-// -----------------------------
-    private int contarPiezas(String color) {
+     private int contarPiezas(String color) {
         int contador = 0;
         for (int i = 0; i < FILAS; i++) {
             for (int j = 0; j < COLUMNAS; j++) {
                 Pieza p = estadoTablero[i][j];
-                if (p != null && color.equals(p.getColor())) {
+                // 1) Ignorar casillas vacías.
+                // 2) Ignorar Zombies (no forman parte de la condición de victoria).
+                if (p != null && color.equals(p.getColor()) && !"Zombie".equals(p.getNombre())) {
                     contador++;
                 }
             }
@@ -305,47 +280,71 @@ public class Tablero extends JFrame implements ActionListener {
         return contador;
     }
 
-    public void destruirPieza(Pieza piezaEliminada) {
+     public void destruirPieza(Pieza piezaEliminada) {
+        if (piezaEliminada == null) return;
 
-        if (piezaEliminada.getColor().equals("Blanco") && !piezaEliminada.getNombre().equals("Zombie")) {
-            piezasBlancasRestantes--;
-
-        } else if (piezaEliminada.getColor().equals("Negro") && !piezaEliminada.getNombre().equals("Zombie")) {
-            piezasNegrasRestantes--;
-
+        // 1) Intentar localizar la pieza en el tablero lógico y quitarla (previene que contarPiezas la siga contando).
+        boolean encontradoYRemovido = false;
+        for (int i = 0; i < FILAS && !encontradoYRemovido; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                if (estadoTablero[i][j] == piezaEliminada) {
+                    estadoTablero[i][j] = null;
+                    encontradoYRemovido = true;
+                    break;
+                }
+            }
         }
 
-        if (!piezaEliminada.getNombre().equals("Zombie")) {
+        // 2) Actualizar contadores (solo piezas principales) y colecciones de imágenes eliminadas
+        if (piezaEliminada.getColor().equals("Blanco") && !piezaEliminada.getNombre().equals("Zombie")) {
+            piezasBlancasRestantes = Math.max(0, piezasBlancasRestantes - 1);
+        } else if (piezaEliminada.getColor().equals("Negro") && !piezaEliminada.getNombre().equals("Zombie")) {
+            piezasNegrasRestantes = Math.max(0, piezasNegrasRestantes - 1);
+        }
 
+        // Añadir imagenes de piezas eliminadas (si no es Zombie)
+        if (!"Zombie".equals(piezaEliminada.getNombre())) {
             if (piezaEliminada.getColor().equals("Blanco")) {
-                imagenesBlancasEliminadas.add(piezaEliminada.getImagen());
-
+                if (piezaEliminada.getImagen() != null) imagenesBlancasEliminadas.add(piezaEliminada.getImagen());
             } else if (piezaEliminada.getColor().equals("Negro")) {
-                imagenesNegrasEliminadas.add(piezaEliminada.getImagen());
+                if (piezaEliminada.getImagen() != null) imagenesNegrasEliminadas.add(piezaEliminada.getImagen());
             }
-
             actualizarPiezasEliminadas();
         }
 
+        // 3) Registrar evento en logs del jugador correspondiente (si existe) y verificar victoria.
+        //    NOTA: Guardar log antes o después no afecta la detección de victoria; aquí añadimos claridad.
+        String msg = String.format("ELIMINACION: %s (%s) fue destruida.", piezaEliminada.getNombre(), piezaEliminada.getColor());
+        Usuarios u = null;
+        if ("Blanco".equals(piezaEliminada.getColor())) {
+            u = sistemaCuentas != null ? sistemaCuentas.buscarUsuario(nombreJugadorBlanco) : null;
+        } else {
+            u = sistemaCuentas != null ? sistemaCuentas.buscarUsuario(nombreJugadorNegro) : null;
+        }
+        if (u != null) {
+            u.agregarLog(msg);
+        }
+
+        // Finalmente verificar si con esta eliminación hay un ganador.
         verificarVictoria();
     }
 
-    // -----------------------------
-// Nueva verificarVictoria: usa conteo real en el tablero (incluye Zombies)
-// -----------------------------
     private void verificarVictoria() {
+        // 1) Contar solo las piezas principales (sin Zombies)
         int piezasBlancas = contarPiezas("Blanco");
         int piezasNegras = contarPiezas("Negro");
 
         String nombreGanador = null;
         String nombrePerdedor = null;
 
+        // 2) Determinar ganador/empate basados en conteo de piezas principales
         if (piezasBlancas <= 0 && piezasNegras <= 0) {
-            // Caso raro: empate por eliminación total (ambos 0)
-            // Puedes decidir qué hacer; aquí no daremos 3 puntos a nadie.
-            JOptionPane.showMessageDialog(this, "Ambos bandos han quedado sin piezas. Empate.", "Empate", JOptionPane.INFORMATION_MESSAGE);
+            // Empate por eliminación de piezas principales (muy improbable), mostrar mensaje e ir al menú
+            JOptionPane.showMessageDialog(this, "Ambos bandos han quedado sin piezas principales. Empate.", "Empate", JOptionPane.INFORMATION_MESSAGE);
             this.dispose();
-            menuReferencia.showMenu();
+            if (menuReferencia != null) {
+                menuReferencia.showMenu();
+            }
             return;
         } else if (piezasBlancas <= 0) {
             nombreGanador = nombreJugadorNegro;
@@ -355,10 +354,31 @@ public class Tablero extends JFrame implements ActionListener {
             nombrePerdedor = nombreJugadorNegro;
         }
 
+        // 3) Si hay ganador, finalizar la partida correctamente (puntos, log, mensaje y volver al menú)
         if (nombreGanador != null) {
-            finalizarPartidaPorVictoria(nombreGanador, nombrePerdedor);
+            // Sumar puntos y guardar log en el usuario ganador
+            Usuarios ganador = sistemaCuentas != null ? sistemaCuentas.buscarUsuario(nombreGanador) : null;
+            String logMensaje = String.format("VICTORIA: %s venció a %s por eliminación de piezas principales. Ganó 3 puntos.", nombreGanador, nombrePerdedor);
+
+            if (ganador != null) {
+                ganador.sumarPuntos(3);
+                ganador.agregarLog(logMensaje);
+            }
+
+            JOptionPane.showMessageDialog(this,
+                    String.format("%s VENCIÓ A %s, FELICIDADES HAS GANADO 3 PUNTOS",
+                            nombreGanador.toUpperCase(), nombrePerdedor.toUpperCase()),
+                    "¡Victoria!",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            this.dispose();
+
+            if (menuReferencia != null) {
+                menuReferencia.showMenu();
+            }
         }
     }
+
 
     /**
      * Redibuja los paneles laterales con las imágenes de las piezas eliminadas.
@@ -369,14 +389,14 @@ public class Tablero extends JFrame implements ActionListener {
 
         for (Image img : imagenesNegrasEliminadas) {
             if (img != null) {
-                Image scaledImg = img.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                Image scaledImg = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
                 piezasNegrasEliminadasPanel.add(new JLabel(new ImageIcon(scaledImg)));
             }
         }
 
         for (Image img : imagenesBlancasEliminadas) {
             if (img != null) {
-                Image scaledImg = img.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                Image scaledImg = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
                 piezasBlancasEliminadasPanel.add(new JLabel(new ImageIcon(scaledImg)));
             }
         }
@@ -391,18 +411,17 @@ public class Tablero extends JFrame implements ActionListener {
 
         // 1. Sumar puntos al ganador
         Usuarios ganador = sistemaCuentas.buscarUsuario(nombreGanador);
-        if (ganador != null) {
-            ganador.setPuntos(ganador.getPuntos() + 3);
-            // Guardar el estado actualizado del usuario si es necesario:
-            // sistemaCuentas.actualizarUsuario(ganador); 
-        }
 
         // 2. Crear mensaje y guardar el evento en el log
-        String logMensaje = String.format("VICTORIA: %s venció a %s. Ganó 3 puntos.",
+        String logMensaje = String.format("VICTORIA: %s venció a %s por eliminación. Ganó 3 puntos.",
                 nombreGanador, nombrePerdedor);
-        sistemaCuentas.getLogsDeUsuario(logMensaje);
 
-        // 3. Mostrar mensaje en pantalla (con el formato solicitado)
+        if (ganador != null) {
+            ganador.sumarPuntos(3); // Sumamos los puntos
+            ganador.agregarLog(logMensaje); // 🔑 GUARDADO DEL LOG EN EL GANADOR
+        }
+
+        // 3. Mostrar mensaje en pantalla (Requisito: "JUGADOR TAL VENCIO A JUGADOR CUAL, FELICIDADES HAS GANADO 3 PUNTOS")
         JOptionPane.showMessageDialog(this,
                 String.format("%s VENCIÓ A %s, FELICIDADES HAS GANADO 3 PUNTOS",
                         nombreGanador.toUpperCase(), nombrePerdedor.toUpperCase()),
@@ -413,15 +432,8 @@ public class Tablero extends JFrame implements ActionListener {
         this.dispose();
 
         // 5. Volver al Menú Principal
-        // Buscamos el usuario logeado original (que puede ser el ganador o el perdedor)
-        // para restaurar la sesión en Menu_Principal.
-        Usuarios usuarioLogeado = usuarioActual.getUsuario().equals(nombreGanador) ? ganador : sistemaCuentas.buscarUsuario(nombrePerdedor);
-
-        if (usuarioLogeado != null) {
-            Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia);
-            mp.iniciarMenu(usuarioLogeado);
-        } else {
-            menuReferencia.showMenu(); // Fallback al Login
+        if (menuReferencia != null) {
+            menuReferencia.showMenu();
         }
     }
 
@@ -1103,4 +1115,5 @@ public class Tablero extends JFrame implements ActionListener {
         }
         return false;
     }
+
 }
