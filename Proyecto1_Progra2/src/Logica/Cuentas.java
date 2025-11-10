@@ -4,7 +4,6 @@
  */
 package Logica;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javax.swing.JOptionPane;
@@ -19,13 +18,10 @@ public class Cuentas implements InterfaceCuentas {
 
     private static Cuentas instancia;
     private ArrayList<Usuarios> listaUsuarios;
-    private static final String ARCHIVO_DATOS = "usuarios.dat";
 
+    // Ya no se usa archivo, todo se maneja en memoria
     private Cuentas() {
-        this.listaUsuarios = cargarUsuariosDelSistema();
-        if (this.listaUsuarios == null) {
-            this.listaUsuarios = new ArrayList<>();
-        }
+        this.listaUsuarios = new ArrayList<>();
     }
 
     public static Cuentas getInstance() {
@@ -35,29 +31,22 @@ public class Cuentas implements InterfaceCuentas {
         return instancia;
     }
 
+    // ────────────────────────────────────────────────
+    // Ya no se guarda ni se carga información
+    // ────────────────────────────────────────────────
     @Override
     public void guardarUsuariosEnSistema() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ARCHIVO_DATOS))) {
-            oos.writeObject(listaUsuarios);
-        } catch (IOException e) {
-            System.err.println("Error al guardar usuarios: " + e.getMessage());
-        }
+        // Sin persistencia: no se guarda nada
     }
 
     @Override
     public ArrayList<Usuarios> cargarUsuariosDelSistema() {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ARCHIVO_DATOS))) {
-            @SuppressWarnings("unchecked")
-            ArrayList<Usuarios> cargados = (ArrayList<Usuarios>) ois.readObject();
-            return cargados;
-        } catch (IOException e) {
-            return new ArrayList<>();
-        } catch (ClassNotFoundException e) {
-            System.err.println("Error: Clase Usuarios no encontrada al cargar.");
-            return new ArrayList<>();
-        }
+        return new ArrayList<>();
     }
 
+    // ────────────────────────────────────────────────
+    // Lógica de usuarios y partidas
+    // ────────────────────────────────────────────────
     @Override
     public void finalizarJuego(String nombreGanador, String nombrePerdedor, boolean fueRetiro) {
         Usuarios ganador = buscarUsuario(nombreGanador);
@@ -82,7 +71,7 @@ public class Cuentas implements InterfaceCuentas {
                     "Fin del Juego", JOptionPane.INFORMATION_MESSAGE);
 
         } else {
-            ganador.sumarPuntos(PUNTOS_GANADOS); 
+            ganador.sumarPuntos(PUNTOS_GANADOS);
             mensajeGanador = String.format("🏆 VICTORIA (Retiro): %s se ha retirado, has ganado %d puntos.", perdedor.getUsuario(), PUNTOS_GANADOS);
             mensajePerdedor = String.format("🚪 RETIRO: Te has retirado de la partida contra %s.", ganador.getUsuario());
 
@@ -94,8 +83,6 @@ public class Cuentas implements InterfaceCuentas {
 
         ganador.agregarLog(mensajeGanador);
         perdedor.agregarLog(mensajePerdedor);
-        
-        guardarUsuariosEnSistema();
     }
 
     @Override
@@ -121,7 +108,6 @@ public class Cuentas implements InterfaceCuentas {
 
         Usuarios nuevoUsuario = new Usuarios(usuario, contrasena);
         listaUsuarios.add(nuevoUsuario);
-        guardarUsuariosEnSistema();
         JOptionPane.showMessageDialog(null, "Usuario creado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
         return true;
     }
@@ -135,10 +121,10 @@ public class Cuentas implements InterfaceCuentas {
 
         char[] storedPass = user.getContrasena();
         boolean match = Arrays.equals(storedPass, contrasena);
-        
+
         Usuarios.limpiarContrasena(contrasena);
-        Usuarios.limpiarContrasena(storedPass); 
-        
+        Usuarios.limpiarContrasena(storedPass);
+
         return match;
     }
 
@@ -168,7 +154,6 @@ public class Cuentas implements InterfaceCuentas {
 
         if (verificarCredenciales(usuario, contrasenaAntigua)) {
             user.setContrasena(contrasenaNueva);
-            guardarUsuariosEnSistema();
             JOptionPane.showMessageDialog(null, "Contraseña cambiada exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             return true;
         } else {
@@ -188,7 +173,6 @@ public class Cuentas implements InterfaceCuentas {
 
         if (verificarCredenciales(usuario, contrasena)) {
             user.setEstado(false);
-            guardarUsuariosEnSistema();
             return true;
         } else {
             JOptionPane.showMessageDialog(null, "Contraseña incorrecta para eliminar la cuenta.", "Error de Verificación", JOptionPane.ERROR_MESSAGE);
@@ -204,9 +188,8 @@ public class Cuentas implements InterfaceCuentas {
                 activos.add(user);
             }
         }
-        
+
         Collections.sort(activos, Comparator.comparingInt(Usuarios::getPuntos).reversed());
-        
         return activos;
     }
 
@@ -218,7 +201,7 @@ public class Cuentas implements InterfaceCuentas {
     @Override
     public ArrayList<String> getLogsPorJugador(String nombreJugador) {
         Usuarios u = buscarUsuario(nombreJugador);
-        if(u != null){
+        if (u != null) {
             return u.getLogDeMisJuegos();
         }
         return new ArrayList<>();

@@ -19,11 +19,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import Logica.InterfaceCuentas;
 import java.net.URL;
-
-/**
- *
- * @author Nathan
- */
+ 
 /**
  *
  * @author Nathan

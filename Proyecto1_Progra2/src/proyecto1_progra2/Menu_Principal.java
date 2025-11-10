@@ -4,7 +4,6 @@
  */
 package proyecto1_progra2;
 
-
 import Logica.Usuarios;
 import Logica.InterfaceCuentas;
 import javax.swing.*;
@@ -20,12 +19,11 @@ import javax.imageio.ImageIO;
  *
  * @author Nathan
  */
-
 /**
- * Clase Menu_Principal corregida — incluye:
- *  - logs con JTextArea para evitar que se corten los mensajes
- *  - paso de referencia a Tablero para volver al Menu_Principal al finalizar la partida
- *  - funciones para iniciar/mostrar el menú con el usuario logueado
+ * Clase Menu_Principal corregida — incluye: - logs con JTextArea para evitar
+ * que se corten los mensajes - paso de referencia a Tablero para volver al
+ * Menu_Principal al finalizar la partida - funciones para iniciar/mostrar el
+ * menú con el usuario logueado
  */
 public class Menu_Principal extends JFrame {
 
@@ -62,6 +60,7 @@ public class Menu_Principal extends JFrame {
     // CLASES INTERNAS
     // ----------------------------
     private class BackgroundPanel extends JPanel {
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -75,6 +74,7 @@ public class Menu_Principal extends JFrame {
     }
 
     private class RankingBackgroundPanel extends JPanel {
+
         public RankingBackgroundPanel(JComponent content) {
             setLayout(new GridBagLayout());
             setOpaque(true);
@@ -94,6 +94,7 @@ public class Menu_Principal extends JFrame {
     }
 
     private class ThemedButton extends JButton {
+
         protected boolean isHovered = false;
         private final Font buttonFont = new Font("Serif", Font.BOLD, 18);
 
@@ -154,6 +155,7 @@ public class Menu_Principal extends JFrame {
     }
 
     private class SubOptionButton extends ThemedButton {
+
         public SubOptionButton(String text) {
             super(text);
             setFont(new Font("Serif", Font.PLAIN, 16));
@@ -189,7 +191,8 @@ public class Menu_Principal extends JFrame {
     // CONSTRUCTOR CORREGIDO
     // ----------------------------
     /**
-     * Constructor que recibe el usuario logueado directamente para evitar NullPointerException.
+     * Constructor que recibe el usuario logueado directamente para evitar
+     * NullPointerException.
      */
     public Menu_Principal(Logica.InterfaceCuentas sistemaCuentas, proyecto1_progra2.Menu menuReferencia, Logica.Usuarios usuarioLogeado) {
         this.sistemaCuentas = sistemaCuentas;
@@ -445,9 +448,15 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         JButton cambiarPassBtn = new SubOptionButton("Cambiar Contraseña");
         cambiarPassBtn.addActionListener(e -> {
-            if (actualPassField != null) { actualPassField.setText(""); }
-            if (nuevaPassField != null) { nuevaPassField.setText(""); }
-            if (confirmarNuevaPassField != null) { confirmarNuevaPassField.setText(""); }
+            if (actualPassField != null) {
+                actualPassField.setText("");
+            }
+            if (nuevaPassField != null) {
+                nuevaPassField.setText("");
+            }
+            if (confirmarNuevaPassField != null) {
+                confirmarNuevaPassField.setText("");
+            }
             cards.show(cardPanel, "CambiarPass");
         });
         subPanel.add(cambiarPassBtn, c);
@@ -455,7 +464,9 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         JButton cerrarCuentaBtn = new SubOptionButton("Cerrar mi Cuenta");
         cerrarCuentaBtn.addActionListener(e -> {
-            if (cerrarCuentaPassField != null) { cerrarCuentaPassField.setText(""); }
+            if (cerrarCuentaPassField != null) {
+                cerrarCuentaPassField.setText("");
+            }
             cards.show(cardPanel, "CerrarCuenta");
         });
         subPanel.add(cerrarCuentaBtn, c);
@@ -487,15 +498,21 @@ public class Menu_Principal extends JFrame {
         c.insets = new Insets(10, 10, 10, 10);
 
         c.gridy++;
-        JButton rankingBtn = new SubOptionButton("Ranking de Jugadores");
+        JButton rankingBtn = new ThemedButton("Ver Ranking");
         rankingBtn.addActionListener(e -> {
+            JPanel rankingPanel = buildRankingPanel(); // reconstruye el panel
+            cardPanel.add(rankingPanel, "Ranking");   // agrega versión nueva
             cards.show(cardPanel, "Ranking");
         });
         subPanel.add(rankingBtn, c);
 
         c.gridy++;
-        JButton logsBtn = new SubOptionButton("Logs de Juegos");
-        logsBtn.addActionListener(e -> cards.show(cardPanel, "LogsJuegos"));
+        JButton logsBtn = new ThemedButton("Ver Logs");
+        logsBtn.addActionListener(e -> {
+            JPanel logsPanel = buildLogsJuegosPanel(); // reconstruye el panel
+            cardPanel.add(logsPanel, "LogsJuegos");
+            cards.show(cardPanel, "LogsJuegos");
+        }); 
         subPanel.add(logsBtn, c);
 
         c.gridy++;
