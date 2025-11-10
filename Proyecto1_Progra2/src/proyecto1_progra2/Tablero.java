@@ -983,7 +983,7 @@ public class Tablero extends JFrame implements ActionListener {
             }
         }
     }
-
+    //Recursiva
     private boolean MovimientoValido(int FilaA, int ColumnaA, int FilaF, int ColumnaF, int maxDistancia, int drFixed, int dcFixed, int currentDistancia) {
         if (FilaA == FilaF && ColumnaA == ColumnaF) {
             return true;

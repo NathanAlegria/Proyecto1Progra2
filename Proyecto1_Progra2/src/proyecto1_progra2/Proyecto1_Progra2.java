@@ -8,7 +8,7 @@ package proyecto1_progra2;
  *
  * @author Nathan
  */
-public class Proyecto1_Progra2 {
+public class Proyecto1_Progra2 { 
 
     /**
      * @param args the command line arguments 
