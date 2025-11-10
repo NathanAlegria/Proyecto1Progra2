@@ -33,7 +33,4 @@ public interface InterfaceCuentas {
 
     ArrayList<String> getLogsPorJugador(String nombreJugador);
 
-    void guardarUsuariosEnSistema();
-
-    ArrayList<Usuarios> cargarUsuariosDelSistema();
 }

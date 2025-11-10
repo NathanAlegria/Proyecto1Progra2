@@ -19,46 +19,29 @@ import javax.imageio.ImageIO;
  *
  * @author Nathan
  */
-/**
- * Clase Menu_Principal corregida — incluye: - logs con JTextArea para evitar
- * que se corten los mensajes - paso de referencia a Tablero para volver al
- * Menu_Principal al finalizar la partida - funciones para iniciar/mostrar el
- * menú con el usuario logueado
- */
+
 public class Menu_Principal extends JFrame {
 
-    // ----------------------------
-    // ATRIBUTOS PRINCIPALES
-    // ----------------------------
-    private Logica.Usuarios usuarioActual; // 🚩 Usuario logueado. Inicializado en el constructor.
+    // ATRIBUTOS 
+    private Logica.Usuarios usuarioActual;
     private Logica.InterfaceCuentas sistemaCuentas;
-    private Menu menuReferencia; // Referencia a la ventana de Login/Registro
-
-    // Campos de formularios
+    private Menu menuReferencia;
     private JPasswordField actualPassField;
     private JPasswordField nuevaPassField;
     private JPasswordField confirmarNuevaPassField;
     private JPasswordField cerrarCuentaPassField;
-
-    // Etiquetas de información
     private JLabel infoUsuario;
     private JLabel infoPuntos;
     private JLabel infoFecha;
     private JLabel infoEstado;
-
-    // Componentes de la interfaz
     private CardLayout cards;
     private JPanel cardPanel;
     private JLabel currentUserNameLabel;
-
-    // Recursos gráficos
     private Image backgroundImage;
     private Image buttonImage;
     private Image buttonHoverImage;
 
-    // ----------------------------
-    // CLASES INTERNAS
-    // ----------------------------
+    
     private class BackgroundPanel extends JPanel {
 
         @Override
@@ -187,17 +170,12 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    // ----------------------------
-    // CONSTRUCTOR CORREGIDO
-    // ----------------------------
-    /**
-     * Constructor que recibe el usuario logueado directamente para evitar
-     * NullPointerException.
-     */
+
+    // CONSTRUCTOR
     public Menu_Principal(Logica.InterfaceCuentas sistemaCuentas, proyecto1_progra2.Menu menuReferencia, Logica.Usuarios usuarioLogeado) {
         this.sistemaCuentas = sistemaCuentas;
         this.menuReferencia = menuReferencia;
-        this.usuarioActual = usuarioLogeado; // 🚩 CORRECCIÓN CLAVE: Inicializa el usuario inmediatamente
+        this.usuarioActual = usuarioLogeado;
 
         setTitle("🏰 Vampire Wargame 📜");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -221,7 +199,7 @@ public class Menu_Principal extends JFrame {
         backgroundPanel.setOpaque(true);
         cardPanel.setOpaque(false);
 
-        // Agregar todos los subpaneles al CardLayout
+        //SubPaneles
         cardPanel.add(buildMainMenu(), "MainMenu");
         cardPanel.add(buildMiCuentaSubMenu(), "MiCuentaSubMenu");
         cardPanel.add(buildVerMiInformacionPanel(), "VerInfo");
@@ -257,7 +235,6 @@ public class Menu_Principal extends JFrame {
 
         setContentPane(backgroundPanel);
 
-        // Actualiza el JLabel de bienvenida en el MainMenu inmediatamente
         if (usuarioActual != null && currentUserNameLabel != null) {
             currentUserNameLabel.setText("Bienvenido, Jugador " + usuarioActual.getUsuario());
         }
@@ -266,9 +243,7 @@ public class Menu_Principal extends JFrame {
         cards.show(cardPanel, "MainMenu");
     }
 
-    // ---------------------------------
-    // MÉTODOS AUXILIARES Y FUNCIONALIDAD
-    // ---------------------------------
+    //Metodos
     public void iniciarMenu(Logica.Usuarios usuarioLogeado) {
         this.usuarioActual = usuarioLogeado;
         if (currentUserNameLabel != null && usuarioLogeado != null) {
@@ -308,9 +283,7 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    // ---------------------------------
-    // PANELES DE MENÚ
-    // ---------------------------------
+    //PANELES DE MENU
     private JPanel buildVerMiInformacionPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(true);
@@ -500,8 +473,8 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         JButton rankingBtn = new ThemedButton("Ver Ranking");
         rankingBtn.addActionListener(e -> {
-            JPanel rankingPanel = buildRankingPanel(); // reconstruye el panel
-            cardPanel.add(rankingPanel, "Ranking");   // agrega versión nueva
+            JPanel rankingPanel = buildRankingPanel(); 
+            cardPanel.add(rankingPanel, "Ranking");
             cards.show(cardPanel, "Ranking");
         });
         subPanel.add(rankingBtn, c);
@@ -509,7 +482,7 @@ public class Menu_Principal extends JFrame {
         c.gridy++;
         JButton logsBtn = new ThemedButton("Ver Logs");
         logsBtn.addActionListener(e -> {
-            JPanel logsPanel = buildLogsJuegosPanel(); // reconstruye el panel
+            JPanel logsPanel = buildLogsJuegosPanel();
             cardPanel.add(logsPanel, "LogsJuegos");
             cards.show(cardPanel, "LogsJuegos");
         }); 
@@ -524,9 +497,7 @@ public class Menu_Principal extends JFrame {
         return subPanel;
     }
 
-    // ---------------------------------
-    // PANELES DE CUENTA Y REPORTES
-    // ---------------------------------
+    //PANELES CUENTA Y REPORTES
     private JPanel buildCambiarPassPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(true);
@@ -715,7 +686,6 @@ public class Menu_Principal extends JFrame {
 
     private JPanel buildLogsJuegosPanel() {
 
-        // Si no hay usuario actual (flujo imposible normalmente) mostramos mensaje de error
         if (this.usuarioActual == null) {
             JPanel errorPanel = new JPanel(new BorderLayout());
             errorPanel.setOpaque(false);
@@ -737,10 +707,9 @@ public class Menu_Principal extends JFrame {
             return new RankingBackgroundPanel(errorPanel);
         }
 
-        // Obtener logs del usuario actual
+        // LOGS
         ArrayList<String> logsJugador = sistemaCuentas.getLogsPorJugador(usuarioActual.getUsuario());
 
-        // Usamos JTextArea para mostrar log completo sin cortes
         JTextArea areaLogs = new JTextArea();
         areaLogs.setEditable(false);
         areaLogs.setLineWrap(true);
@@ -835,7 +804,6 @@ public class Menu_Principal extends JFrame {
     }
 
     private void Juego(String oponenteNombre) {
-        // Al iniciar el Tablero, PASAMOS 'this' para que el Tablero pueda volver al Menu_Principal correcto
         this.dispose();
         SwingUtilities.invokeLater(() -> new Tablero(usuarioActual.getUsuario(), oponenteNombre, sistemaCuentas, this).setVisible(true));
     }

@@ -68,7 +68,7 @@ public abstract class Pieza {
         }
     }
 
-    // Método para restar vida ignorando el escudo (usado por el ataque Lanza de la Muerte)
+    // Método para restar vida ignorando el escudo
     public void restarVidaIgnorandoEscudo(int dano) {
         this.vida -= dano;
     }
@@ -95,7 +95,6 @@ public abstract class Pieza {
         String sufijoColor = getColor().equals("Blanco") ? "B" : "N";
         String nombreArchivo = getNombre() + sufijoColor + ".jpg";
 
-        // PRUEBA AMBAS RUTAS
         String[] posiblesRutas = {
             "/Imagenes/" + nombreArchivo,
             "/proyecto1_progra2/Imagenes/" + nombreArchivo

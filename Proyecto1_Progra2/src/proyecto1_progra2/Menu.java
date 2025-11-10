@@ -38,10 +38,8 @@ public class Menu extends JFrame {
     private JPasswordField registerConfPassField;
     private InterfaceCuentas sistemaCuentas;
 
-    // MÉTODO AGREGADO: Permite que la ventana Menu_Principal vuelva a mostrar esta ventana al cerrar sesión.
     public void showMenu() {
         this.setVisible(true);
-        // Opcional: limpiar los campos de login al regresar.
         if (loginUserField != null) {
             loginUserField.setText("");
         }
@@ -150,7 +148,6 @@ public class Menu extends JFrame {
         this.sistemaCuentas = Cuentas.getInstance();
 
         try {
-            // Asegúrate de que las rutas de los recursos sean correctas para tu proyecto
             backgroundImage = ImageIO.read(getClass().getResource("/Imagenes/fondo.jpg"));
             buttonImage = ImageIO.read(getClass().getResource("/Imagenes/botones.jpg"));
             buttonHoverImage = ImageIO.read(getClass().getResource("/Imagenes/botones.jpg"));
@@ -325,9 +322,8 @@ public class Menu extends JFrame {
 
                 Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuarioIngresado);
 
-                // 🚩 CORRECCIÓN 1: Pasar el usuario al constructor para inicializarlo inmediatamente.
                 Menu_Principal mp = new Menu_Principal(sistemaCuentas, Menu.this, usuarioLogeado);
-                mp.setVisible(true); // Solo se necesita mostrar la nueva ventana
+                mp.setVisible(true); 
             } else {
                 JOptionPane.showMessageDialog(Menu.this, "Usuario o contraseña incorrectos.", "Error de Login", JOptionPane.ERROR_MESSAGE);
                 loginPassField.setText("");
@@ -434,10 +430,8 @@ public class Menu extends JFrame {
 
                 Usuarios usuarioLogeado = sistemaCuentas.buscarUsuario(usuario);
 
-                // 🚩 CORRECCIÓN 2: Pasar el usuario al constructor para inicializarlo inmediatamente.
                 Menu_Principal mp = new Menu_Principal(sistemaCuentas, menuReferencia, usuarioLogeado);
-                mp.setVisible(true); // Solo se necesita mostrar la nueva ventana
-
+                mp.setVisible(true); 
             }
 
             Usuarios.limpiarContrasena(contra);

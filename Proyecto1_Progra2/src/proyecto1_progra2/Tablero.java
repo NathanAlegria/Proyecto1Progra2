@@ -16,12 +16,7 @@ import java.util.ArrayList;
  *
  * @author Nathan
  */
-/**
- * Tablero completo (con cambios solicitados): - constructor recibe la
- * referencia a Menu_Principal para poder volver a él - logs de eventos
- * relevantes se guardan en ambos jugadores - panel lateral de piezas eliminadas
- * ajustado - ruleta/turnos/ataques sin cambios funcionales significativos
- */
+
 public class Tablero extends JFrame implements ActionListener {
 
     private Usuarios usuarioActual;
@@ -45,7 +40,7 @@ public class Tablero extends JFrame implements ActionListener {
     private int piezasBlancasRestantes = 0;
     private int piezasNegrasRestantes = 0;
 
-    // Ruleta
+    
     private final RuletaPanel ruletaPanel;
     private final JButton botonRuleta;
     private final JButton botonRendirse;
@@ -59,11 +54,10 @@ public class Tablero extends JFrame implements ActionListener {
     private boolean turnoEnCurso = false;
 
     private InterfaceCuentas sistemaCuentas;
-    // Referencia a Menu_Principal que inició la partida (para volver al menú principal con el mismo usuario)
+    
     private Menu_Principal menuPrincipalReferencia;
     private Menu menuReferencia;
 
-    // Piezas Eliminadas
     private JPanel piezasNegrasEliminadasPanel;
     private JPanel piezasBlancasEliminadasPanel;
 
@@ -115,9 +109,7 @@ public class Tablero extends JFrame implements ActionListener {
         }
         panelPrincipal.add(panelTablero, BorderLayout.CENTER);
 
-        // ----------------------------------------------------------------
-        // INICIO: AJUSTE DEL PANEL LATERAL IZQUIERDO (Piezas Eliminadas)
-        // ----------------------------------------------------------------
+        //Piezas Eliminadas
         JPanel panelLateralIzquierdo = new JPanel();
         panelLateralIzquierdo.setLayout(new BoxLayout(panelLateralIzquierdo, BoxLayout.Y_AXIS));
         panelLateralIzquierdo.setPreferredSize(new Dimension(200, 0));
@@ -145,10 +137,8 @@ public class Tablero extends JFrame implements ActionListener {
         splitEliminadas.setDividerSize(5);
         panelLateralIzquierdo.add(splitEliminadas);
 
-        // ----------------------------------------------------------------
-        // FIN: PANEL LATERAL IZQUIERDO
-        // ----------------------------------------------------------------
-        // Panel de controles inferior
+        
+        // Panel Turno
         JPanel panelControles = new JPanel();
         turnoLabel = new JLabel("Turno: " + jugadorActualColor);
         panelControles.add(turnoLabel);
@@ -169,7 +159,7 @@ public class Tablero extends JFrame implements ActionListener {
         ruletaPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panelLateral.add(ruletaPanel);
 
-        panelLateral.add(Box.createRigidArea(new Dimension(0, 15))); // SEPARACION
+        panelLateral.add(Box.createRigidArea(new Dimension(0, 15)));
 
         // Botón Rendirse
         botonRendirse = new JButton("Rendirse");
@@ -180,7 +170,7 @@ public class Tablero extends JFrame implements ActionListener {
         botonRendirse.addActionListener(e -> rendirse());
         panelLateral.add(botonRendirse);
 
-        panelLateral.add(Box.createRigidArea(new Dimension(0, 15))); // SEPARACION
+        panelLateral.add(Box.createRigidArea(new Dimension(0, 15))); 
 
         // Botón Ruleta
         botonRuleta = new JButton("GIRAR RULETA");
@@ -204,7 +194,6 @@ public class Tablero extends JFrame implements ActionListener {
         girosRestantesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panelLateral.add(girosRestantesLabel);
 
-        // Añadir todos los paneles al BorderLayout
         add(panelPrincipal, BorderLayout.CENTER);
         add(panelControles, BorderLayout.SOUTH);
         add(panelLateral, BorderLayout.EAST);
@@ -218,38 +207,26 @@ public class Tablero extends JFrame implements ActionListener {
         actualizarEstadoRuleta();
     }
 
-    // Código corregido en el método rendirse() de la clase del Tablero de Juego
+    
     private void rendirse() {
-        // ... (Tu lógica de confirmación, ganadores, perdedores, sumar puntos y logs en memoria) ...
+        
         int confirm = JOptionPane.showConfirmDialog(this,
                 "¿Deseas rendirte? El contrincante obtendrá 3 puntos.",
                 "Confirmar Rendirse",
                 JOptionPane.YES_NO_OPTION);
-
-        // 🟢 Aquí se usa
+        
         if (confirm == JOptionPane.YES_OPTION) {
             String nombrePerdedor = jugadorActualColor.equals("Blanco") ? nombreJugadorBlanco : nombreJugadorNegro;
             String nombreGanador = jugadorActualColor.equals("Blanco") ? nombreJugadorNegro : nombreJugadorBlanco;
 
-            // ... (Obtención de objetos ganador/perdedor y aplicación de logs/puntos en memoria) ...
             if (sistemaCuentas != null) {
-                // Esta llamada guarda los datos al disco. La lista interna 'listaUsuarios'
-                // en la clase Cuentas ahora tiene los datos correctos en memoria.
                 sistemaCuentas.finalizarJuego(nombreGanador, nombrePerdedor, true);
             }
-
-            // ... (Tu JOptionPane y this.dispose()) ...
             this.dispose();
 
-            // 🟢 MODIFICACIÓN CRÍTICA AQUÍ:
             if (menuPrincipalReferencia != null) {
-                // Asumiendo que el usuario logueado es el jugador Blanco:
                 String nombreUsuarioLogueado = nombreJugadorBlanco;
-
-                // **CRÍTICO:** Vuelve a buscar el usuario para obtener la referencia más reciente 
-                // de la lista interna de Cuentas (que tiene los puntos y logs actualizados).
                 Usuarios retorno = sistemaCuentas.buscarUsuario(nombreUsuarioLogueado);
-
                 if (retorno != null) {
                     menuPrincipalReferencia.iniciarMenu(retorno);
                 }
@@ -318,7 +295,7 @@ public class Tablero extends JFrame implements ActionListener {
             actualizarPiezasEliminadas();
         }
 
-        // Guardar evento en logs de ambos jugadores (garantiza que ambos vean lo sucedido)
+        // Guardar evento en logs de ambos jugadores
         String msg = String.format("ELIMINACIÓN: %s (%s) fue destruida.", piezaEliminada.getNombre(), piezaEliminada.getColor());
         Usuarios u1 = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
         Usuarios u2 = sistemaCuentas.buscarUsuario(nombreJugadorNegro);
@@ -427,8 +404,6 @@ public class Tablero extends JFrame implements ActionListener {
         if (perdedor != null) {
             perdedor.agregarLog("DERROTA: Perdiste contra " + nombreGanador);
         }
-
-        // Guardar el log también en ambos por si requieres duplicarlo
         Usuarios u1 = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);
         Usuarios u2 = sistemaCuentas.buscarUsuario(nombreJugadorNegro);
         if (u1 != null) {
@@ -454,9 +429,7 @@ public class Tablero extends JFrame implements ActionListener {
         }
     }
 
-    // =======================================================================
-    // --- MÉTODOS DE CONTROL DE TURNO ACCESIBLES EXTERNAMENTE (Menu_Principal) ---
-    // =======================================================================
+    //Metodos de Turno
     public void iniciarTurno() {
         if (turnoEnCurso) {
             return;
@@ -589,53 +562,89 @@ public class Tablero extends JFrame implements ActionListener {
         resetBorders();
         boolean accionEjecutada = false;
 
+        Pieza piezaEnCasilla = estadoTablero[Fila][Columna];
+
         if (piezaSeleccionada == null) {
 
-            Pieza piezaEnCasilla = estadoTablero[Fila][Columna];
-
-            if (piezaEnCasilla != null
-                    && piezaEnCasilla.getColor().equals(jugadorActualColor)
-                    && piezaEnCasilla.getNombre().equals(piezaDelTurno)) {
-                if (piezaEnCasilla.getNombre().equals("Zombie")) {
-                    JOptionPane.showMessageDialog(this, "El Zombie no puede ser movido ni atacado directamente.", "Reglas del Zombie", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-
+            // Permite selleccionar cualquier ficha propia
+            if (piezaEnCasilla != null && piezaEnCasilla.getColor().equals(jugadorActualColor)) {
                 piezaSeleccionada = piezaEnCasilla;
                 selectedRow = Fila;
                 selectedCol = Columna;
 
-                int maxDistanciaMovimiento = piezaSeleccionada.getNombre().equals("HombreLobo") ? 2 : 1;
-                int maxDistanciaAtaque = piezaSeleccionada.getNombre().equals("Necromancer") ? 2 : 1;
+                // Solo resaltar movimientos si la pieza coincide con la del turno
+                if (piezaEnCasilla.getNombre().equals(piezaDelTurno)) {
+                    int maxDistanciaMovimiento = piezaSeleccionada.getNombre().equals("HombreLobo") ? 2 : 1;
+                    int maxDistanciaAtaque = piezaSeleccionada.getNombre().equals("Necromancer") ? 2 : 1;
 
-                for (int FilaF = 0; FilaF < FILAS; FilaF++) {
-                    for (int ColumnaF = 0; ColumnaF < COLUMNAS; ColumnaF++) {
+                    for (int FilaF = 0; FilaF < FILAS; FilaF++) {
+                        for (int ColumnaF = 0; ColumnaF < COLUMNAS; ColumnaF++) {
+                            JButton targetButton = botonesTablero[FilaF][ColumnaF];
+                            Pieza destino = estadoTablero[FilaF][ColumnaF];
 
-                        JButton targetButton = botonesTablero[FilaF][ColumnaF];
-                        Pieza destino = estadoTablero[FilaF][ColumnaF];
-
-                        if (destino == null) {
-                            if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaMovimiento)) {
-                                targetButton.setIcon(null);
-                                targetButton.setBackground(HIGHLIGHT_COLOR);
-                            }
-                        } else if (!destino.getColor().equals(jugadorActualColor)) {
-                            if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaAtaque)
-                                    || (piezaSeleccionada.getNombre().equals("Necromancer") && isAdjacentToFriendlyZombie(FilaF, ColumnaF, jugadorActualColor))) {
-                                targetButton.setBorder(BorderFactory.createLineBorder(Color.RED, 3));
+                            if (destino == null) {
+                                if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaMovimiento)) {
+                                    targetButton.setIcon(null);
+                                    targetButton.setBackground(HIGHLIGHT_COLOR);
+                                }
+                            } else if (!destino.getColor().equals(jugadorActualColor)) {
+                                if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaAtaque)
+                                        || (piezaSeleccionada.getNombre().equals("Necromancer") && isAdjacentToFriendlyZombie(FilaF, ColumnaF, jugadorActualColor))) {
+                                    targetButton.setBorder(BorderFactory.createLineBorder(Color.RED, 3));
+                                }
                             }
                         }
                     }
                 }
 
             } else {
-                if (piezaEnCasilla != null && piezaEnCasilla.getColor().equals(jugadorActualColor)) {
-                    JOptionPane.showMessageDialog(this, "Solo puedes mover piezas del tipo: " + piezaDelTurno, "Pieza Incorrecta", JOptionPane.WARNING_MESSAGE);
-                }
                 selectedRow = -1;
                 selectedCol = -1;
             }
+
         } else {
+
+            if (piezaEnCasilla != null && piezaEnCasilla.getColor().equals(jugadorActualColor)) {
+                piezaSeleccionada = piezaEnCasilla;
+                selectedRow = Fila;
+                selectedCol = Columna;
+
+                // Solo resaltar movimientos si la pieza coincide con la del turno
+                if (!piezaSeleccionada.getNombre().equals(piezaDelTurno)) {
+                    JOptionPane.showMessageDialog(this, "Solo puedes mover piezas del tipo: " + piezaDelTurno, "Ficha Seleccionada", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    int maxDistanciaMovimiento = piezaSeleccionada.getNombre().equals("HombreLobo") ? 2 : 1;
+                    int maxDistanciaAtaque = piezaSeleccionada.getNombre().equals("Necromancer") ? 2 : 1;
+
+                    for (int FilaF = 0; FilaF < FILAS; FilaF++) {
+                        for (int ColumnaF = 0; ColumnaF < COLUMNAS; ColumnaF++) {
+                            JButton targetButton = botonesTablero[FilaF][ColumnaF];
+                            Pieza destino = estadoTablero[FilaF][ColumnaF];
+
+                            if (destino == null) {
+                                if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaMovimiento)) {
+                                    targetButton.setIcon(null);
+                                    targetButton.setBackground(HIGHLIGHT_COLOR);
+                                }
+                            } else if (!destino.getColor().equals(jugadorActualColor)) {
+                                if (isPathValid(selectedRow, selectedCol, FilaF, ColumnaF, maxDistanciaAtaque)
+                                        || (piezaSeleccionada.getNombre().equals("Necromancer") && isAdjacentToFriendlyZombie(FilaF, ColumnaF, jugadorActualColor))) {
+                                    targetButton.setBorder(BorderFactory.createLineBorder(Color.RED, 3));
+                                }
+                            }
+                        }
+                    }
+                }
+                return; 
+            }
+
+            
+            if (!piezaSeleccionada.getNombre().equals(piezaDelTurno)) {
+                JOptionPane.showMessageDialog(this, "Solo puedes mover piezas del tipo: " + piezaDelTurno, "Movimiento inválido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            
             if (Fila == selectedRow && Columna == selectedCol) {
                 accionEjecutada = true;
             } else {
@@ -682,13 +691,13 @@ public class Tablero extends JFrame implements ActionListener {
                         JOptionPane.showMessageDialog(this, "Movimiento no válido para esta pieza o distancia.", "Error de Reglas", JOptionPane.WARNING_MESSAGE);
                     }
                 } else {
+                    // Ataque
                     if (!destino.getColor().equals(piezaSeleccionada.getColor())) {
 
                         boolean isStandardAttackPossible = isPathValid(selectedRow, selectedCol, Fila, Columna, maxDistanciaAtaque);
                         boolean isZombieAttackPossible = nombrePieza.equals("Necromancer") && isAdjacentToFriendlyZombie(Fila, Columna, jugadorActualColor);
 
                         if (isStandardAttackPossible || isZombieAttackPossible) {
-
                             String ataqueTipo = "0";
                             boolean isLongRangeZombieAttack = isZombieAttackPossible && !isStandardAttackPossible;
 
@@ -772,6 +781,42 @@ public class Tablero extends JFrame implements ActionListener {
         }
 
         actualizarTableroVisual();
+    }
+
+    private void seleccionarPieza(int fila, int col) {
+        Pieza pieza = estadoTablero[fila][col];
+        if (pieza != null && pieza.getColor().equals(jugadorActualColor)) {
+            if (pieza.getNombre().equals("Zombie")) {
+                JOptionPane.showMessageDialog(this, "El Zombie no puede ser movido ni atacado directamente.", "Reglas del Zombie", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            piezaSeleccionada = pieza;
+            selectedRow = fila;
+            selectedCol = col;
+            resetBorders();
+            resaltarMovimientosYPeligros(piezaSeleccionada);
+        }
+    }
+
+    private void resaltarMovimientosYPeligros(Pieza pieza) {
+        int maxDistMovimiento = pieza.getNombre().equals("HombreLobo") ? 2 : 1;
+        int maxDistAtaque = pieza.getNombre().equals("Necromancer") ? 2 : 1;
+
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                Pieza destino = estadoTablero[i][j];
+                JButton btn = botonesTablero[i][j];
+                if (destino == null && isPathValid(selectedRow, selectedCol, i, j, maxDistMovimiento)) {
+                    btn.setBackground(HIGHLIGHT_COLOR);
+                    btn.setIcon(null);
+                } else if (destino != null && !destino.getColor().equals(jugadorActualColor)) {
+                    if (isPathValid(selectedRow, selectedCol, i, j, maxDistAtaque)
+                            || (pieza.getNombre().equals("Necromancer") && isAdjacentToFriendlyZombie(i, j, jugadorActualColor))) {
+                        btn.setBorder(BorderFactory.createLineBorder(Color.RED, 3));
+                    }
+                }
+            }
+        }
     }
 
     private void cambiarTurno(boolean forzarCambio) {

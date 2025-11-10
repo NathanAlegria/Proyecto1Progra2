@@ -31,22 +31,6 @@ public class Cuentas implements InterfaceCuentas {
         return instancia;
     }
 
-    // ────────────────────────────────────────────────
-    // Ya no se guarda ni se carga información
-    // ────────────────────────────────────────────────
-    @Override
-    public void guardarUsuariosEnSistema() {
-        // Sin persistencia: no se guarda nada
-    }
-
-    @Override
-    public ArrayList<Usuarios> cargarUsuariosDelSistema() {
-        return new ArrayList<>();
-    }
-
-    // ────────────────────────────────────────────────
-    // Lógica de usuarios y partidas
-    // ────────────────────────────────────────────────
     @Override
     public void finalizarJuego(String nombreGanador, String nombrePerdedor, boolean fueRetiro) {
         Usuarios ganador = buscarUsuario(nombreGanador);
