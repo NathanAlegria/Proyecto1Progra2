@@ -218,34 +218,41 @@ public class Tablero extends JFrame implements ActionListener {
         actualizarEstadoRuleta();
     }
 
+    // Código corregido en el método rendirse() de la clase del Tablero de Juego
     private void rendirse() {
+        // ... (Tu lógica de confirmación, ganadores, perdedores, sumar puntos y logs en memoria) ...
         int confirm = JOptionPane.showConfirmDialog(this,
                 "¿Deseas rendirte? El contrincante obtendrá 3 puntos.",
                 "Confirmar Rendirse",
                 JOptionPane.YES_NO_OPTION);
 
+        // 🟢 Aquí se usa
         if (confirm == JOptionPane.YES_OPTION) {
             String nombrePerdedor = jugadorActualColor.equals("Blanco") ? nombreJugadorBlanco : nombreJugadorNegro;
             String nombreGanador = jugadorActualColor.equals("Blanco") ? nombreJugadorNegro : nombreJugadorBlanco;
 
-            Usuarios ganador = sistemaCuentas.buscarUsuario(nombreGanador);
-            String logMensaje = String.format("RETIRO: %s se ha retirado. Victoria y 3 puntos para %s.",
-                    nombrePerdedor, nombreGanador);
-
-            if (ganador != null) {
-                nombrePerdedor = jugadorActualColor.equals("Blanco") ? nombreJugadorBlanco : nombreJugadorNegro;
+            // ... (Obtención de objetos ganador/perdedor y aplicación de logs/puntos en memoria) ...
+            if (sistemaCuentas != null) {
+                // Esta llamada guarda los datos al disco. La lista interna 'listaUsuarios'
+                // en la clase Cuentas ahora tiene los datos correctos en memoria.
                 sistemaCuentas.finalizarJuego(nombreGanador, nombrePerdedor, true);
             }
 
-            JOptionPane.showMessageDialog(this,
-                    String.format("%s SE HA RETIRADO, FELICIDADES %s, HAS GANADO 3 PUNTOS",
-                            nombrePerdedor.toUpperCase(), nombreGanador.toUpperCase()),
-                    "Partida Terminada por Retiro",
-                    JOptionPane.INFORMATION_MESSAGE);
-
+            // ... (Tu JOptionPane y this.dispose()) ...
             this.dispose();
-            if (menuReferencia != null) {
-                menuReferencia.showMenu();
+
+            // 🟢 MODIFICACIÓN CRÍTICA AQUÍ:
+            if (menuPrincipalReferencia != null) {
+                // Asumiendo que el usuario logueado es el jugador Blanco:
+                String nombreUsuarioLogueado = nombreJugadorBlanco;
+
+                // **CRÍTICO:** Vuelve a buscar el usuario para obtener la referencia más reciente 
+                // de la lista interna de Cuentas (que tiene los puntos y logs actualizados).
+                Usuarios retorno = sistemaCuentas.buscarUsuario(nombreUsuarioLogueado);
+
+                if (retorno != null) {
+                    menuPrincipalReferencia.iniciarMenu(retorno);
+                }
             }
         }
     }
@@ -256,6 +263,19 @@ public class Tablero extends JFrame implements ActionListener {
             for (int j = 0; j < COLUMNAS; j++) {
                 Pieza p = estadoTablero[i][j];
                 if (p != null && color.equals(p.getColor()) && !"Zombie".equals(p.getNombre())) {
+                    contador++;
+                }
+            }
+        }
+        return contador;
+    }
+
+    private int contarTodasLasPiezas(String color) {
+        int contador = 0;
+        for (int i = 0; i < FILAS; i++) {
+            for (int j = 0; j < COLUMNAS; j++) {
+                Pieza p = estadoTablero[i][j];
+                if (p != null && color.equals(p.getColor())) {
                     contador++;
                 }
             }
@@ -313,14 +333,14 @@ public class Tablero extends JFrame implements ActionListener {
     }
 
     private void verificarVictoria() {
-        int piezasBlancas = contarPiezas("Blanco");
-        int piezasNegras = contarPiezas("Negro");
+        int piezasBlancas = contarTodasLasPiezas("Blanco");
+        int piezasNegras = contarTodasLasPiezas("Negro");
 
         String nombreGanador = null;
         String nombrePerdedor = null;
 
         if (piezasBlancas <= 0 && piezasNegras <= 0) {
-            JOptionPane.showMessageDialog(this, "Ambos bandos han quedado sin piezas principales. Empate.", "Empate", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Ambos bandos han quedado sin piezas. Empate.", "Empate", JOptionPane.INFORMATION_MESSAGE);
             this.dispose();
             if (menuPrincipalReferencia != null) {
                 Usuarios retorno = sistemaCuentas.buscarUsuario(nombreJugadorBlanco);

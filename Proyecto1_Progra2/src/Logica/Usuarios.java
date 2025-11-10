@@ -8,12 +8,14 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Date;
+import java.io.Serializable;
 
 /**
  *
  * @author Nathan
  */
-public class Usuarios {
+
+public class Usuarios implements Serializable {
  
     private String usuario;
     private char[] contra;
@@ -23,12 +25,8 @@ public class Usuarios {
     
     private ArrayList<String> logDeMisJuegos; 
 
-    // ==========================================================
-    // CONSTRUCTOR 1: Acepta String (Común para Login o Mocks)
-    // ==========================================================
     public Usuarios(String usuario, String password) {
         this.usuario = usuario;
-        // CORRECCIÓN CRÍTICA: Convierte el String a char[] y lo almacena.
         this.contra = password.toCharArray(); 
         
         this.puntos = 0;
@@ -38,13 +36,8 @@ public class Usuarios {
         this.logDeMisJuegos = new ArrayList<>(); 
     }
     
-    // ==========================================================
-    // CONSTRUCTOR 2: Acepta char[] (NECESARIO para evitar NoSuchMethodError)
-    // Se usa cuando la contraseña se pasa directamente desde un JPasswordField.
-    // ==========================================================
     public Usuarios(String usuario, char[] passwordArray) {
         this.usuario = usuario;
-        // CORRECCIÓN CRÍTICA: Copia el array de caracteres de forma segura
         this.contra = Arrays.copyOf(passwordArray, passwordArray.length);
         
         this.puntos = 0;
@@ -53,7 +46,6 @@ public class Usuarios {
         this.estado = true;
         this.logDeMisJuegos = new ArrayList<>(); 
         
-        // OPCIONAL: Limpiar inmediatamente el array temporal pasado (por seguridad)
         limpiarContrasena(passwordArray);
     }
     
@@ -68,13 +60,11 @@ public class Usuarios {
     }
 
     public char[] getContrasena() {
-        // Devuelve una copia para evitar modificación externa de la contraseña original
         return Arrays.copyOf(contra, contra.length); 
     }
 
     public void setContrasena(char[] nuevaContrasena) {
         limpiarContrasena(this.contra);
-        // Almacena una copia del nuevo array
         this.contra = Arrays.copyOf(nuevaContrasena, nuevaContrasena.length); 
     }
 
