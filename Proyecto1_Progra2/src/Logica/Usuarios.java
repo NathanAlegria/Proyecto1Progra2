@@ -49,6 +49,7 @@ public class Usuarios implements Serializable {
         limpiarContrasena(passwordArray);
     }
     
+    //Recursiva
     public static void limpiarContrasena(char[] array) {
         if (array != null) {
             Arrays.fill(array, ' ');
